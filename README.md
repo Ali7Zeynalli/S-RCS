@@ -314,6 +314,18 @@ Manage all system-wide configurations, including:
 
 ---
 
+---
+
+## 🐳 Docker Management
+
+> **💡 Looking for an easy way to manage your Docker environment?**
+>
+> Use **[DockGate](https://github.com/Ali7Zeynalli/dockgate)** — a lightweight, self-hosted Docker management panel. Monitor containers, images, and volumes from a clean web interface without complex setup.
+>
+> 👉 **[View DockGate on GitHub](https://github.com/Ali7Zeynalli/dockgate)**
+
+---
+
 ## 🤝 Professional Support / Enterprise Support
 
 > **Finding installation difficult?** We can help!
