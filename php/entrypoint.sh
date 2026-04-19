@@ -37,6 +37,16 @@ for dir in "${WRITABLE_DIRS[@]}"; do
     fi
 done
 
+# Əgər config.php yoxdursa, default şablondan yarad
+# (fresh install: istifadəçi git-dən clone edib, config.php yoxdur)
+# İnstaller ilk girişdə bunu istifadəçinin datasına yenidən yazacaq
+if [ ! -f "$APP_DIR/config/config.php" ]; then
+    if [ -f "$APP_DIR/includes/default-config.php" ]; then
+        cp "$APP_DIR/includes/default-config.php" "$APP_DIR/config/config.php"
+        echo "[entrypoint] Created config.php from default-config.php template"
+    fi
+fi
+
 # Konfiqurasiya faylları üçün ayrıca — yaratma və yazma icazəsi
 if [ -f "$APP_DIR/config/config.php" ]; then
     chgrp www-data "$APP_DIR/config/config.php" 2>/dev/null || true
