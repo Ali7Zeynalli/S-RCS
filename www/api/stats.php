@@ -7,8 +7,16 @@
  */
 
 session_start();
+
+// Prevent warnings from corrupting JSON
+ini_set('display_errors', 0);
+ini_set('log_errors', 1);
+
 require_once(__DIR__ . '/../includes/functions.php');
 require_once(__DIR__ . '/../includes/classes/Task.php');
+
+// gzip compression - 3MB → 300KB
+if (!ob_start('ob_gzhandler')) ob_start();
 
 header('Content-Type: application/json');
 
@@ -19,14 +27,26 @@ if (!isset($_SESSION['ad_username'])) {
 
 try {
     $ldap = getLDAPConnection();
-    
-    // Calculate user stats if not in session
-    if (!isset($_SESSION['user_stats'])) {
+
+    // Calculate user stats with SESSION CACHE (10 min TTL)
+    $statsCacheKey = 'user_stats';
+    $statsCacheTime = 'user_stats_time';
+    $statsCacheTTL = 600;  // 10 minutes
+
+    $needsRefresh = !isset($_SESSION[$statsCacheKey])
+                  || (time() - ($_SESSION[$statsCacheTime] ?? 0)) > $statsCacheTTL;
+
+    if ($needsRefresh) {
+        // Cache maxPwdAge once for the whole loop (was: called 6455 times!)
+        $maxPwdAge = getDomainMaxPwdAge($ldap);
+
         $users = getAllUsers($ldap);
         $lockedUsers = getLockedUsers($ldap);
-        
+        $userCount = (isset($users['count']) ? $users['count'] : count($users)) - 1;
+        if ($userCount < 0) $userCount = 0;
+
         $stats = [
-            'total' => count($users) - 1,
+            'total' => $userCount,
             'active' => 0,
             'inactive' => 0,
             'expired_password' => 0,
@@ -34,33 +54,32 @@ try {
             'never_expires' => 0,
             'must_change' => 0
         ];
-        
-        // Loop through users to calculate stats
-        for ($i = 0; $i < $stats['total']; $i++) {
+
+        // FAST loop — NO LDAP call per user, uses cached $maxPwdAge
+        $now = time();
+        for ($i = 0; $i < $userCount; $i++) {
             $user = $users[$i];
-            $uac = isset($user['useraccountcontrol'][0]) ? $user['useraccountcontrol'][0] : 0;
-            $pwdLastSet = isset($user['pwdlastset'][0]) ? $user['pwdlastset'][0] : 0;
-            
-            // Check if account is enabled
-            if (($uac & 2) !== 2) {
-                $stats['active']++;
-            } else {
-                $stats['inactive']++;
-            }
-            
-            // Check password expiry and never expires status
-            $pwdStatus = getPasswordExpiryStatus($pwdLastSet, $ldap, $uac);
-            if ($pwdStatus['status'] === 'Expired') {
-                $stats['expired_password']++;
-            } else if ($pwdStatus['status'] === 'Never Expires') {
+            $uac = isset($user['useraccountcontrol'][0]) ? (int)$user['useraccountcontrol'][0] : 0;
+            $pwdLastSet = isset($user['pwdlastset'][0]) ? $user['pwdlastset'][0] : '0';
+
+            // Enabled/disabled
+            if (($uac & 2) !== 2) $stats['active']++;
+            else $stats['inactive']++;
+
+            // Password status (computed locally, no LDAP call)
+            if ($uac & 65536) {
                 $stats['never_expires']++;
-            } else if ($pwdStatus['status'] === 'Must Change') {
+            } elseif ($pwdLastSet === '0' || $pwdLastSet === 0) {
                 $stats['must_change']++;
+            } elseif ($maxPwdAge > 0) {
+                $pwdSetTs = ($pwdLastSet / 10000000) - 11644473600;
+                if ($now > ($pwdSetTs + $maxPwdAge)) {
+                    $stats['expired_password']++;
+                }
             }
         }
 
-        // Save to session
-        $_SESSION['user_stats'] = [
+        $_SESSION[$statsCacheKey] = [
             'total' => $stats['total'],
             'active' => $stats['active'],
             'inactive' => $stats['inactive'],
@@ -71,9 +90,10 @@ try {
                 'must_change' => $stats['must_change']
             ]
         ];
+        $_SESSION[$statsCacheTime] = time();
     }
 
-    $userStats = $_SESSION['user_stats'];
+    $userStats = $_SESSION[$statsCacheKey];
 
     // Get groups stats
     $groups = getAllGroups($ldap);

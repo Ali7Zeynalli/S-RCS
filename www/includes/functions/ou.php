@@ -106,11 +106,27 @@ function getAllOUs($ldap_conn) {
             continue;
         }
         
-        // Normal container processing - member count (with warning suppression)
-        // Some OUs may not be readable; @ suppresses warnings that would break JSON
+        // Normal container processing - member count (paginated for accurate count)
+        // Previously: ldap_count_entries returned max 1000 (AD default limit)
+        // Now: paginated count, returns accurate total for OUs with 1000+ members
         $memberFilter = "(|(objectClass=user)(objectClass=group)(objectClass=computer))";
-        $memberSearch = @ldap_search($ldap_conn, $dn, $memberFilter);
-        $memberCount = $memberSearch ? @ldap_count_entries($ldap_conn, $memberSearch) : 0;
+        $memberCount = 0;
+        $memCookie = '';
+        do {
+            $memRes = @ldap_list(
+                $ldap_conn, $dn, $memberFilter,
+                ['distinguishedName'],  // only DN - minimal data for fastest count
+                0, 0, 0, LDAP_DEREF_NEVER,
+                [['oid' => LDAP_CONTROL_PAGEDRESULTS, 'value' => ['size' => 1000, 'cookie' => $memCookie]]]
+            );
+            if (!$memRes) break;
+
+            @ldap_parse_result($ldap_conn, $memRes, $memErr, $memMd, $memMsg, $memRef, $memCtrls);
+            $memCount = @ldap_count_entries($ldap_conn, $memRes);
+            if ($memCount !== false) $memberCount += $memCount;
+
+            $memCookie = $memCtrls[LDAP_CONTROL_PAGEDRESULTS]['value']['cookie'] ?? '';
+        } while (!empty($memCookie));
         
         // Format OU path for display
         $path = formatOUPath($dn);

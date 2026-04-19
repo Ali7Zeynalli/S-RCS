@@ -193,6 +193,44 @@ function formatUserDetails($user, $ldap_conn) {
 }
 
 
+/**
+ * Get domain maxPwdAge in seconds (cached for 10 minutes).
+ * CRITICAL PERFORMANCE FIX: previously ldap_read was called 6455 times
+ * (once per user in getPasswordExpiryStatus). Now cached globally.
+ */
+function getDomainMaxPwdAge($ldap_conn) {
+    // Session cache - avoid re-reading on every request
+    $cacheKey = 'domain_max_pwd_age';
+    $cacheTime = 'domain_max_pwd_age_time';
+    $cacheTTL = 600; // 10 minutes
+
+    if (isset($_SESSION[$cacheKey]) && (time() - ($_SESSION[$cacheTime] ?? 0)) < $cacheTTL) {
+        return $_SESSION[$cacheKey];
+    }
+
+    try {
+        $config = require(getConfigPath());
+        $base_dn = $config['ad_settings']['base_dn'];
+        $result = @ldap_read($ldap_conn, $base_dn, "(objectclass=*)", ["maxPwdAge"]);
+
+        if (!$result) return 0;
+
+        $domain_info = @ldap_get_entries($ldap_conn, $result);
+        if (!isset($domain_info[0]['maxpwdage'][0])) return 0;
+
+        $maxPwdAge = abs($domain_info[0]['maxpwdage'][0]) / 10000000;
+
+        // Cache in session
+        $_SESSION[$cacheKey] = $maxPwdAge;
+        $_SESSION[$cacheTime] = time();
+
+        return $maxPwdAge;
+    } catch (Exception $e) {
+        error_log("getDomainMaxPwdAge error: " . $e->getMessage());
+        return 0;
+    }
+}
+
 function getPasswordExpiryStatus($pwdLastSet, $ldap_conn, $userAccountControl = null) {
     try {
         // First check for "Never Expires" flag
@@ -203,36 +241,34 @@ function getPasswordExpiryStatus($pwdLastSet, $ldap_conn, $userAccountControl = 
             ];
         }
 
-        // Existing password status logic
-        $config = require(getConfigPath());
-        $base_dn = $config['ad_settings']['base_dn'];
-        
-        if ($pwdLastSet === '0') {
+        if ($pwdLastSet === '0' || $pwdLastSet === 0) {
             return [
                 'status' => 'Must Change',
                 'class' => 'bg-secondary'
             ];
         }
-        
-        $result = ldap_read($ldap_conn, $base_dn, "(objectclass=*)", ["maxPwdAge"]);
-        $domain_info = ldap_get_entries($ldap_conn, $result);
-        
-        $maxPwdAge = abs($domain_info[0]['maxpwdage'][0])/10000000;
+
+        // Use cached maxPwdAge (1 LDAP call instead of N)
+        $maxPwdAge = getDomainMaxPwdAge($ldap_conn);
+        if ($maxPwdAge <= 0) {
+            return ['status' => 'Unknown', 'class' => 'bg-secondary'];
+        }
+
         $pwdLastSetTimestamp = ($pwdLastSet/10000000) - 11644473600;
         $expiryTimestamp = $pwdLastSetTimestamp + $maxPwdAge;
         $now = time();
-        
+
         if ($now > $expiryTimestamp) {
             return ['status' => 'Expired', 'class' => 'bg-danger'];
         }
-        
+
         $daysLeft = floor(($expiryTimestamp - $now) / 86400);
         if ($daysLeft <= 5) {
-            return ['status' => "$daysLeft  days left", 'class' => 'bg-warning'];
+            return ['status' => "$daysLeft days left", 'class' => 'bg-warning'];
         }
-        
+
         return ['status' => "$daysLeft days left", 'class' => 'bg-success'];
-        
+
     } catch (Exception $e) {
         error_log("Password status error: " . $e->getMessage());
         return ['status' => 'Unknown', 'class' => 'bg-secondary'];
