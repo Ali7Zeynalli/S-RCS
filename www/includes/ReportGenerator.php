@@ -13,34 +13,56 @@ class ReportGenerator {
     }
 
     public function generateReport($sections) {
+        // Map lowercase section name -> PascalCase key used in data array
+        $sectionMap = [
+            'users'     => 'Users',
+            'groups'    => 'Groups',
+            'computers' => 'Computers',
+            'ous'       => 'OUs',
+            'gpos'      => 'GPOs'
+        ];
+
         $data = [];
         foreach ($sections as $section) {
-            switch ($section) {
-                case 'users':
-                    $users = getAllUsers($this->ldap);
-                    $data['Users'] = $this->formatUserData($users);
-                    break;
-                case 'groups':
-                    $groups = getAllGroups($this->ldap);
-                    $data['Groups'] = $this->formatGroupData($groups);
-                    break;
-                case 'computers':
-                    $computers = getAllComputers($this->ldap);
-                    $data['Computers'] = $this->formatComputerData($computers);
-                    break;
-                case 'ous':
-                    $ous = getAllOUs($this->ldap);
-                    $data['OUs'] = $this->formatOUData($ous);
-                    break;
-                case 'gpos':
-                    $gpos = $this->getAllGPOs();
-                    $data['GPOs'] = $this->formatGPOData($gpos);
-                    break;
+            $key = $sectionMap[$section] ?? ucfirst($section);
+
+            try {
+                switch ($section) {
+                    case 'users':
+                        $users = getAllUsers($this->ldap);
+                        $data[$key] = $this->formatUserData($users);
+                        break;
+                    case 'groups':
+                        $groups = getAllGroups($this->ldap);
+                        $data[$key] = $this->formatGroupData($groups);
+                        break;
+                    case 'computers':
+                        $computersResult = getAllComputers($this->ldap);
+                        // getAllComputers returns ['computers' => [...], 'stats' => [...]]
+                        $computers = $computersResult['computers'] ?? $computersResult;
+                        $data[$key] = $this->formatComputerData($computers);
+                        break;
+                    case 'ous':
+                        $ous = getAllOUs($this->ldap);
+                        $data[$key] = $this->formatOUData($ous);
+                        break;
+                    case 'gpos':
+                        $gpos = $this->getAllGPOs();
+                        $data[$key] = $this->formatGPOData($gpos);
+                        break;
+                    default:
+                        // Unknown section
+                        $data[$key] = [];
+                        break;
+                }
+            } catch (Exception $e) {
+                error_log("Report section '$section' failed: " . $e->getMessage());
+                $data[$key] = []; // don't break the whole report
             }
-            
-            // Ensure each section has at least an empty array, not null
-            if (!isset($data[$section]) || $data[$section] === null) {
-                $data[$section] = [];
+
+            // Guarantee key exists and is an array
+            if (!isset($data[$key]) || !is_array($data[$key])) {
+                $data[$key] = [];
             }
         }
         return $data;
@@ -50,17 +72,32 @@ class ReportGenerator {
         if (empty($users) || !is_array($users)) {
             return [];
         }
-        
+
         $formatted = [];
-        foreach ($users as $user) {
-            if (!isset($user['samaccountname'])) continue;
+        $count = isset($users['count']) ? (int)$users['count'] : 0;
+
+        // Iterate only real entries (skip 'count' key and other metadata)
+        for ($i = 0; $i < $count; $i++) {
+            if (!isset($users[$i]) || !is_array($users[$i])) continue;
+            $user = $users[$i];
+            if (!isset($user['samaccountname'][0])) continue;
+
+            $uac = isset($user['useraccountcontrol'][0]) ? (int)$user['useraccountcontrol'][0] : 0;
+            $lastLogonRaw = $user['lastlogon'][0] ?? 0;
+            $lastLogon = 'Never';
+            if ($lastLogonRaw && $lastLogonRaw > 0) {
+                $ts = ((int)$lastLogonRaw / 10000000) - 11644473600;
+                if ($ts > 0) $lastLogon = date('Y-m-d H:i:s', (int)$ts);
+            }
+
             $formatted[] = [
-                'Username' => $user['samaccountname'][0] ?? '',
-                'Full Name' => $user['displayname'][0] ?? '',
-                'Email' => $user['mail'][0] ?? '',
-                'Department' => $user['department'][0] ?? '',
-                'Status' => ($user['useraccountcontrol'][0] & 2) ? 'Disabled' : 'Enabled',
-                'Last Logon' => isset($user['lastlogon'][0]) ? date('Y-m-d H:i:s', ($user['lastlogon'][0] / 10000000) - 11644473600) : 'Never'
+                'Username'    => $user['samaccountname'][0],
+                'Full Name'   => $user['displayname'][0] ?? '',
+                'Email'       => $user['mail'][0] ?? '',
+                'Department'  => $user['department'][0] ?? '',
+                'Title'       => $user['title'][0] ?? '',
+                'Status'      => ($uac & 2) ? 'Disabled' : 'Enabled',
+                'Last Logon'  => $lastLogon
             ];
         }
         return $formatted;
@@ -82,19 +119,32 @@ class ReportGenerator {
     }
 
     private function formatComputerData($computers) {
-        // Check if computers array is empty
         if (empty($computers) || !is_array($computers)) {
             return [];
         }
-        
-        return array_map(function($computer) {
-            return [
-                'Name' => $computer['name'] ?? '',
-                'OS' => $computer['os'] ?? 'Unknown',
-                'Last Logon' => $computer['lastLogon'] ?? 'Never',
-                'Status' => isset($computer['enabled']) && $computer['enabled'] ? 'Enabled' : 'Disabled'
+
+        // Handle both wrapped {computers: [...], stats: [...]} and raw array
+        if (isset($computers['computers']) && is_array($computers['computers'])) {
+            $computers = $computers['computers'];
+        }
+
+        $formatted = [];
+        foreach ($computers as $computer) {
+            if (!is_array($computer) || !isset($computer['name'])) continue;
+
+            $formatted[] = [
+                'Name'        => $computer['name'] ?? '',
+                'DNS Name'    => $computer['deviceName'] ?? '',
+                'OS'          => $computer['os'] ?? 'Unknown',
+                'OS Version'  => $computer['osVersion'] ?? '',
+                'Type'        => $computer['type'] ?? '',
+                'OU'          => $computer['ou'] ?? '',
+                'Last Logon'  => $computer['lastLogon'] ?? 'Never',
+                'Status'      => isset($computer['enabled']) && $computer['enabled'] ? 'Enabled' : 'Disabled',
+                'Description' => $computer['description'] ?? ''
             ];
-        }, $computers);
+        }
+        return $formatted;
     }
 
     private function formatOUData($ous) {

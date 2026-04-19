@@ -50,14 +50,23 @@ function getAllUsers($ldap_conn) {
         // LDAP axtarış limitlərini artırırıq
         ldap_set_option($ldap_conn, LDAP_OPT_SIZELIMIT, 5000);
         
-        // Daha effektiv filter və minimal atributlar
+        // Filter and attributes needed for user list, user detail, and reports
         $filter = "(&(objectClass=user)(objectCategory=person))";
         $attributes = array(
             "samaccountname",
             "useraccountcontrol",
             "pwdlastset",
             "distinguishedname",
-            "memberof"
+            "memberof",
+            // Additional fields used by ReportGenerator and user list display
+            "displayname",
+            "mail",
+            "department",
+            "title",
+            "telephonenumber",
+            "mobile",
+            "lastlogon",
+            "whencreated"
         );
         
         // Səhifələmə ilə axtarış
