@@ -104,11 +104,16 @@ ini_set('display_errors', 1);
 function updateConfig($data) {
     $config_file = __DIR__ . '/config/config.php';
     $current_config = require($config_file);
-    
+
+    // Versiyanı VERSION faylından oxu (single source of truth)
+    $version = file_exists(__DIR__ . '/VERSION')
+        ? trim(file_get_contents(__DIR__ . '/VERSION'))
+        : '1.3.2';
+
     // Adding installation information
     $current_config['installation'] = [
         'date' => date('Y-m-d H:i:s'),
-        'version' => '1.3.0',
+        'version' => $version,
         'installed' => true,
         'installer' => $data['admin_username'] ?? 'unknown',
         'install_type' => 'fresh_install',
@@ -1015,37 +1020,51 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     `;
                 }
                 
-                Object.entries(data.requirements).forEach(([key, value]) => {
+                Object.entries(data.requirements || {}).forEach(([key, value]) => {
+                    if (!value || typeof value !== 'object') return;
+
                     const statusClass = value.status ? 'success' : 'danger';
                     const icon = value.status ? 'check' : 'times';
-                    
+
+                    // Manual steps-i güvənli şəkildə topla (optional chaining ilə)
+                    // value.manual_steps undefined olarsa crash etməsin
+                    const manualSteps = value.manual_steps || {};
+                    const sysKey = value.system_detected;
+                    const srvKey = value.server_detected;
+                    const stepsList = (Array.isArray(manualSteps[sysKey]) ? manualSteps[sysKey] : null)
+                                   || (Array.isArray(manualSteps[srvKey]) ? manualSteps[srvKey] : null)
+                                   || [];
+                    const stepsHtml = stepsList.length > 0
+                        ? stepsList.map(step => `<li>${step}</li>`).join('')
+                        : '<li>No specific instructions available</li>';
+
+                    // Current config (yalnız Mail Function üçün)
+                    const configHtml = (key === 'Mail Function' && value.current_config)
+                        ? `<div class="mt-2 alert alert-info">
+                               <strong>Current Mail Configuration:</strong><br>
+                               ${Object.entries(value.current_config).map(([k, v]) => `<small>${k}: ${v}</small><br>`).join('')}
+                           </div>`
+                        : '';
+
+                    // Instructions block (yalnız status=false olanda)
+                    const instructionsHtml = !value.status
+                        ? `<div class="mt-2 alert alert-warning">
+                               <strong>Installation Instructions${srvKey ? ' for ' + srvKey : ''}:</strong>
+                               <ol>${stepsHtml}</ol>
+                           </div>`
+                        : '';
+
                     html += `
                         <div class="list-group-item">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
                                     <h6 class="mb-1">${key}</h6>
                                     <small class="text-muted">
-                                        Required: ${value.required}<br>
-                                        Current: ${value.current}
+                                        Required: ${value.required ?? '—'}<br>
+                                        Current: ${value.current ?? '—'}
                                     </small>
-                                    ${key === 'Mail Function' && value.current_config ? `
-                                        <div class="mt-2 alert alert-info">
-                                            <strong>Current Mail Configuration:</strong><br>
-                                            ${Object.entries(value.current_config).map(([k, v]) => 
-                                                `<small>${k}: ${v}</small><br>`
-                                            ).join('')}
-                                        </div>
-                                    ` : ''}
-                                    ${!value.status ? `
-                                        <div class="mt-2 alert alert-warning">
-                                            <strong>Installation Instructions for ${value.server_detected}:</strong>
-                                            <ol>
-                                                ${value.manual_steps[value.system_detected]?.map(step => `<li>${step}</li>`).join('') || 
-                                                  value.manual_steps[value.server_detected]?.map(step => `<li>${step}</li>`).join('') || 
-                                                  'No specific instructions available'}
-                                            </ol>
-                                        </div>
-                                    ` : ''}
+                                    ${configHtml}
+                                    ${instructionsHtml}
                                 </div>
                                 <span class="badge bg-${statusClass} rounded-pill">
                                     <i class="fas fa-${icon}"></i>

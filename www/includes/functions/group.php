@@ -12,47 +12,82 @@ require_once dirname(__DIR__) . '/functions.php';
 function getAllGroups($ldap_conn) {
     $config = require(getConfigPath());
     $base_dn = $config['ad_settings']['base_dn'];
-    
+
+    // AD default MaxPageSize=1000 — pagination olmadan böyük domen-lərdə
+    // ldap_search partial/null nəticə qaytarır və JSON qırılır
+    ldap_set_option($ldap_conn, LDAP_OPT_SIZELIMIT, 5000);
+
     $filter = "(objectClass=group)";
     $attributes = [
         "cn", "distinguishedname", "grouptype", "member",
         "whencreated", "description", "mail"
     ];
-    
-    $result = ldap_search($ldap_conn, $base_dn, $filter, $attributes);
-    $entries = ldap_get_entries($ldap_conn, $result);
-    
+
     $groups = [];
-    for ($i = 0; $i < $entries['count']; $i++) {
-        $entry = $entries[$i];
-        $dn = $entry['distinguishedname'][0];
-        
-        // Get group type and scope from groupType attribute
-        $groupTypeValue = intval($entry['grouptype'][0]);
-        $type = getGroupSecurityType($groupTypeValue);
-        $scope = getGroupScope($groupTypeValue);
-        
-        // Get OU path
-        $ou = formatOUPath($dn);
-        
-        $groups[] = [
-            'name' => $entry['cn'][0],
-            'dn' => $dn,
-            'type' => $type,
-            'scope' => $scope,
-            'memberCount' => isset($entry['member']) ? $entry['member']['count'] : 0,
-            'ou' => $ou,
-            'created' => formatLDAPDate($entry['whencreated'][0] ?? ''),
-            'description' => $entry['description'][0] ?? '',
-            'email' => $entry['mail'][0] ?? '',
-            'groupTypeValue' => $groupTypeValue // Save raw value for debugging
-        ];
-    }
-    
+    $cookie = '';
+
+    do {
+        $result = ldap_search(
+            $ldap_conn,
+            $base_dn,
+            $filter,
+            $attributes,
+            0, 0, 0,
+            LDAP_DEREF_NEVER,
+            [[
+                'oid' => LDAP_CONTROL_PAGEDRESULTS,
+                'value' => ['size' => 1000, 'cookie' => $cookie]
+            ]]
+        );
+
+        if ($result === false) {
+            error_log('getAllGroups LDAP search failed: ' . ldap_error($ldap_conn));
+            break;
+        }
+
+        ldap_parse_result($ldap_conn, $result, $errcode, $matcheddn, $errmsg, $referrals, $controls);
+        $entries = ldap_get_entries($ldap_conn, $result);
+
+        if (!is_array($entries) || !isset($entries['count'])) {
+            break;
+        }
+
+        for ($i = 0; $i < $entries['count']; $i++) {
+            $entry = $entries[$i];
+
+            if (!isset($entry['distinguishedname'][0]) || !isset($entry['cn'][0])) {
+                continue;
+            }
+
+            $dn = $entry['distinguishedname'][0];
+            $groupTypeValue = intval($entry['grouptype'][0] ?? 0);
+            $type = getGroupSecurityType($groupTypeValue);
+            $scope = getGroupScope($groupTypeValue);
+            $ou = formatOUPath($dn);
+
+            $groups[] = [
+                'name' => $entry['cn'][0],
+                'dn' => $dn,
+                'type' => $type,
+                'scope' => $scope,
+                'memberCount' => isset($entry['member']) ? $entry['member']['count'] : 0,
+                'ou' => $ou,
+                'created' => formatLDAPDate($entry['whencreated'][0] ?? ''),
+                'description' => $entry['description'][0] ?? '',
+                'email' => $entry['mail'][0] ?? '',
+                'groupTypeValue' => $groupTypeValue
+            ];
+        }
+
+        $cookie = isset($controls[LDAP_CONTROL_PAGEDRESULTS]['value']['cookie'])
+            ? $controls[LDAP_CONTROL_PAGEDRESULTS]['value']['cookie']
+            : '';
+    } while (!empty($cookie));
+
     usort($groups, function($a, $b) {
         return strcasecmp($a['name'], $b['name']);
     });
-    
+
     return $groups;
 }
 

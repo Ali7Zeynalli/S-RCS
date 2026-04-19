@@ -629,7 +629,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Add SweetAlert2 JS
     const sweetalertJS = document.createElement('script');
-    sweetalertJS.src = 'temp/assets/lib/sweetalert2/sweetalert2.min.js';
+    sweetalertJS.src = 'temp/assets/lib/SweetAlert2/sweetalert2.min.js';
     document.body.appendChild(sweetalertJS);
 
     // Statistika kartlarına klik hadisəsini əlavə edirik

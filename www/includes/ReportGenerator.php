@@ -119,12 +119,39 @@ class ReportGenerator {
         $config = require(__DIR__ . '/../config/config.php');
         $base_dn = $config['ad_settings']['base_dn'];
         $gpo_container = "CN=Policies,CN=System," . $base_dn;
-        
+
+        // Böyük domen-də 1000+ GPO üçün pagination
+        ldap_set_option($this->ldap, LDAP_OPT_SIZELIMIT, 5000);
+
         $filter = "(objectClass=groupPolicyContainer)";
         $attributes = ["displayName", "flags", "gPCFileSysPath", "whenCreated", "whenChanged", "description"];
-        
-        $result = ldap_search($this->ldap, $gpo_container, $filter, $attributes);
-        return ldap_get_entries($this->ldap, $result);
+
+        $all = ['count' => 0];
+        $cookie = '';
+
+        do {
+            $result = ldap_search(
+                $this->ldap, $gpo_container, $filter, $attributes,
+                0, 0, 0, LDAP_DEREF_NEVER,
+                [['oid' => LDAP_CONTROL_PAGEDRESULTS, 'value' => ['size' => 1000, 'cookie' => $cookie]]]
+            );
+
+            if (!$result) break;
+
+            ldap_parse_result($this->ldap, $result, $errcode, $matcheddn, $errmsg, $referrals, $controls);
+            $entries = ldap_get_entries($this->ldap, $result);
+
+            if (is_array($entries) && isset($entries['count'])) {
+                for ($i = 0; $i < $entries['count']; $i++) {
+                    $all[$all['count']] = $entries[$i];
+                    $all['count']++;
+                }
+            }
+
+            $cookie = $controls[LDAP_CONTROL_PAGEDRESULTS]['value']['cookie'] ?? '';
+        } while (!empty($cookie));
+
+        return $all;
     }
 
     private function formatGPOData($gpos) {

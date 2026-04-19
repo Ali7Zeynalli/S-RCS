@@ -1,6 +1,17 @@
 Options -Indexes
 RewriteEngine On
 
+# Favicon handling — əgər fayl yoxdursa, 204 (No Content) qaytar
+RewriteCond %{REQUEST_URI} ^/favicon\.ico$
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^ - [R=204,L]
+
+# Static asset tapılmayanda error.php-yə GETMƏSİN (yoxsa PHP error → 500)
+# Əvəzinə təmiz 404 qaytar — browser konsol aydın görünsün
+RewriteCond %{REQUEST_URI} \.(css|js|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot|map)$ [NC]
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^ - [R=404,L]
+
 # Set path for error documents with relative URLs (simplifying)
 ErrorDocument 400 /error.php?code=400
 ErrorDocument 401 /error.php?code=401

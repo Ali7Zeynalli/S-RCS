@@ -108,9 +108,10 @@ function connectToAD($username, $password) {
             // İstifadəçi adını təhlükəsizləşdiririk - LDAP injektion qarşısını almaq üçün
             $bind_username = $username;
             // Xüsusi simvolları yoxlayırıq və təmizləyirik
-            if (preg_match('/[\\\\*\(\)\[\]":;,\/<>=+@]/', $bind_username)) {
+            // @ simvolu UPN (user@domain) formatında qanuni olduğu üçün siyahıdan çıxarılıb
+            if (preg_match('/[\\\\*\(\)\[\]":;,\/<>=+]/', $bind_username)) {
                 error_log("WARNING: Potentially dangerous characters detected in username: $bind_username");
-                
+
                 // Əsas xüsusi simvolları təmizləyirik
                 $bind_username = preg_replace('/[\\\\*\(\)\[\]":;,\/<>=+]/', '', $bind_username);
             }

@@ -6,8 +6,10 @@
  * Written by [Ali Zeynalli] <[https://linkedin.com/in/ali7zeynalli]> [2025]
  */
 session_start();
+// PHP xətaları JSON cavabına qarışmasın — yalnız loga yaz
 error_reporting(E_ALL);
-ini_set('display_errors', 1);
+ini_set('display_errors', 0);
+ini_set('log_errors', 1);
 require_once(__DIR__ . '/../includes/functions.php');
 
 

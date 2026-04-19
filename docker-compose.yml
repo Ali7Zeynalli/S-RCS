@@ -31,6 +31,9 @@ services:
       - MYSQL_USER=${MYSQL_USER:-srcs_admin}
       - MYSQL_PASSWORD=${MYSQL_PASSWORD:-SrcS@2026!Secure}
       - PHP_OPCACHE_ENABLE=1
+      # Apache redirect-in həqiqi HTTPS port-unu bilsin (host-da dinlənilən port)
+      # Bu olmadıqda: HTTP:8080 → https://host:8080 yönlənir (400 flood)
+      - SRCS_HTTPS_PORT=${HTTPS_PORT:-8043}
     restart: unless-stopped
     depends_on:
       mysql:
@@ -52,7 +55,10 @@ services:
       MYSQL_USER: ${MYSQL_USER:-srcs_admin}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD:-SrcS@2026!Secure}
     volumes:
-      - mysql_data:/var/lib/mysql  # Named volume for better performance
+      # Bind mount — data host-da ./mysql_data/ qovluğunda qalır
+      # `docker-compose down -v` olsa belə host qovluğu silinmir
+      # Backup: ./mysql_data/ qovluğunu zipləmək kifayətdir
+      - ./mysql_data:/var/lib/mysql
       - ./mysql:/docker-entrypoint-initdb.d:ro  # Init scripts if any
     restart: unless-stopped
     networks:
@@ -100,8 +106,7 @@ networks:
     driver: bridge
 
 # =============================================================================
-# Volumes - Named volumes for persistence and performance
+# Volumes
 # =============================================================================
-volumes:
-  mysql_data:
-    driver: local
+# mysql_data artıq bind mount kimi istifadə olunur (./mysql_data/ host qovluğu)
+# Bu docker-compose down -v olsa belə data-nın silinməsinin qarşısını alır

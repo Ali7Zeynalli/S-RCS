@@ -20,6 +20,12 @@ ini_set('error_log', __DIR__ . '/php_errors.log');
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-cache, must-revalidate');
 
+// Cari versiyanı VERSION faylından oxu — single source of truth
+// Bu, release zamanı yalnız VERSION faylı dəyişdirməklə bütün yerlərdə update olunur
+$APP_VERSION = file_exists(__DIR__ . '/VERSION')
+    ? trim(file_get_contents(__DIR__ . '/VERSION'))
+    : '1.3.2';
+
 // Add this function at the top of the file after the initial comments
 function getMacAddress() {
     try {
@@ -422,25 +428,49 @@ try {
             ];
         }
 
+        // Ümumi data strukturu üçün default qeyd
+        // Frontend JS bütün element-lərdə eyni field-ləri gözləyir —
+        // manual_steps/system_detected/server_detected olmasa undefined-də forEach crash edir
+        $system_name = $system_info['os']['is_windows'] ? 'Windows' : 'Linux';
+        $server_name = $system_info['server']['type'] ?? 'Apache';
+
         // Add PHP version check
         $requirements['PHP Version'] = [
             'required' => '7.4.0',
             'current' => phpversion(),
-            'status' => version_compare(phpversion(), '7.4.0', '>=')
+            'status' => version_compare(phpversion(), '7.4.0', '>='),
+            'manual_steps' => [
+                'Windows' => ['1. Download PHP 7.4+ from php.net', '2. Update Apache config'],
+                'Linux' => ['1. Run: sudo apt-get install php7.4', '2. Restart Apache: sudo service apache2 restart']
+            ],
+            'system_detected' => $system_name,
+            'server_detected' => $server_name
         ];
 
         // Add directory check
         $requirements['Config Directory'] = [
             'required' => 'Writable',
             'current' => is_writable(__DIR__ . '/config') ? 'Writable' : 'Not Writable',
-            'status' => is_writable(__DIR__ . '/config')
+            'status' => is_writable(__DIR__ . '/config'),
+            'manual_steps' => [
+                'Windows' => ['1. Right-click config folder → Properties → Security', '2. Grant IIS_IUSRS or Apache user write permission'],
+                'Linux' => ['1. Run: sudo chown -R www-data:www-data ' . __DIR__ . '/config', '2. Run: sudo chmod -R 755 ' . __DIR__ . '/config']
+            ],
+            'system_detected' => $system_name,
+            'server_detected' => $server_name
         ];
 
         // Add memory check
         $requirements['Memory Limit'] = [
             'required' => '128M',
             'current' => ini_get('memory_limit'),
-            'status' => intval(ini_get('memory_limit')) >= 128
+            'status' => intval(ini_get('memory_limit')) >= 128,
+            'manual_steps' => [
+                'Windows' => ['1. Edit php.ini', '2. Set: memory_limit = 128M', '3. Restart web server'],
+                'Linux' => ['1. Edit /etc/php/*/apache2/php.ini', '2. Set: memory_limit = 128M', '3. sudo service apache2 restart']
+            ],
+            'system_detected' => $system_name,
+            'server_detected' => $server_name
         ];
 
         // Calculate overall status
@@ -531,7 +561,7 @@ try {
                 'installed' => true,
                 'first_login' => true,
                 'date' => date('Y-m-d H:i:s'),
-                'version' => '1.3.0',
+                'version' => $APP_VERSION,
                 'last_update' => date('Y-m-d H:i:s'),
                 'installer' => $input['admin_username'],
                 'install_hash' => hash('sha256', implode('|', [
@@ -628,7 +658,7 @@ try {
             // Create .installed file
             file_put_contents(__DIR__ . '/config/.installed', json_encode([
                 'date' => date('Y-m-d H:i:s'),
-                'version' => '1.3.0',
+                'version' => $APP_VERSION,
                 'license_key' => $license_key,
                 'server_info' => [
                     'hostname' => gethostname(),
@@ -642,7 +672,7 @@ try {
             $installation_details = [
                 'success' => true,
                 'message' => 'Installation completed successfully',
-                'version' => '1.3.0',
+                'version' => $APP_VERSION,
                 'license_key' => $license_key,
                 'date' => date('Y-m-d H:i:s'),
                 'admin_username' => $input['admin_username'],

@@ -11,13 +11,37 @@ require_once dirname(__DIR__) . '/functions.php';
 function getAllOUs($ldap_conn) {
     $config = require(getConfigPath());
     $base_dn = $config['ad_settings']['base_dn'];
-    
+
+    // AD MaxPageSize=1000 bypass
+    ldap_set_option($ldap_conn, LDAP_OPT_SIZELIMIT, 5000);
+
     $filter = "(|(objectClass=organizationalUnit)(objectClass=container))";
     $attributes = ["ou", "cn", "distinguishedname", "description", "member", "whenCreated", "objectClass", "showInAdvancedViewOnly"];
-    
-    $result = ldap_search($ldap_conn, $base_dn, $filter, $attributes);
-    $entries = ldap_get_entries($ldap_conn, $result);
-    
+
+    // Pagination ilə bütün OU-ları çək
+    $entries = ['count' => 0];
+    $cookie = '';
+    do {
+        $result = ldap_search(
+            $ldap_conn, $base_dn, $filter, $attributes,
+            0, 0, 0, LDAP_DEREF_NEVER,
+            [['oid' => LDAP_CONTROL_PAGEDRESULTS, 'value' => ['size' => 1000, 'cookie' => $cookie]]]
+        );
+        if (!$result) break;
+
+        ldap_parse_result($ldap_conn, $result, $errcode, $matcheddn, $errmsg, $referrals, $controls);
+        $page = ldap_get_entries($ldap_conn, $result);
+
+        if (is_array($page) && isset($page['count'])) {
+            for ($i = 0; $i < $page['count']; $i++) {
+                $entries[$entries['count']] = $page[$i];
+                $entries['count']++;
+            }
+        }
+
+        $cookie = $controls[LDAP_CONTROL_PAGEDRESULTS]['value']['cookie'] ?? '';
+    } while (!empty($cookie));
+
     // System and advanced containers to hide
     $hiddenContainers = [
         'CN=System',

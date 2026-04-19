@@ -1,5 +1,11 @@
 # Database
 /mysql
+/mysql_data
+www/reports
+
+# Private documentation (never goes to public repo)
+/docs
+/.claude
 
 # Sensitive data
 /temp/secure_store

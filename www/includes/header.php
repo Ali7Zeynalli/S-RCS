@@ -19,11 +19,11 @@ require_once __DIR__ . '/init.php';
     <link href="temp/assets/lib/bootstrap/bootstrap.min.css" rel="stylesheet">
     <link href="temp/assets/lib/font-awesome/all.min.css" rel="stylesheet"> <!-- Font Awesome -->
     <link href="temp/assets/lib/animate/animate.min.css" rel="stylesheet"> <!-- Animate.css -->
-    <link href="temp/assets/lib/sweetalert2/sweetalert2.min.css" rel="stylesheet"> <!-- SweetAlert2 -->
+    <link href="temp/assets/lib/SweetAlert2/sweetalert2.min.css" rel="stylesheet"> <!-- SweetAlert2 -->
     <link href="temp/css/dashboard.css" rel="stylesheet">
     
     <!-- Lokal JavaScript faylları -->
-    <script src="temp/assets/lib/sweetalert2/sweetalert2.min.js"></script>
+    <script src="temp/assets/lib/SweetAlert2/sweetalert2.min.js"></script>
 </head>
 <body>
     <!-- Top Navbar -->
