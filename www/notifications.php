@@ -18,7 +18,9 @@ $pageTitle = __('notifications_title');
 $activePage = 'notifications';
 include 'api/notifications.php';
 // Bildirişləri əldə et - JSON struct: { timestamp, data: { notifications: [...] } }
-$response = getNotifications();
+// ?force=1 query param cache-i bypass edir (Refresh düyməsi üçün)
+$forceRefresh = isset($_GET['force']) && $_GET['force'] === '1';
+$response = getNotifications($forceRefresh);
 $notifications = $response['data']['notifications']
     ?? $response['notifications']
     ?? [];
@@ -75,16 +77,23 @@ require_once('includes/header.php');
 <script>
 function refreshNotifications() {
     const refreshBtn = document.getElementById('refreshBtn');
-    
+
     refreshBtn.disabled = true;
     refreshBtn.querySelector('i').classList.add('fa-spin');
-    
+
     const container = document.querySelector('.notifications-wrapper');
-    
-    fetch(window.location.href, {
+
+    // ?force=1 parametri əlavə et - cache-i bypass edir və GitHub-dan yenisini çəkir
+    const url = new URL(window.location.href);
+    url.searchParams.set('force', '1');
+    url.searchParams.set('_ts', Date.now()); // browser cache da bypass
+
+    fetch(url.toString(), {
         method: 'GET',
         headers: {
-            'X-Requested-With': 'XMLHttpRequest'
+            'X-Requested-With': 'XMLHttpRequest',
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache'
         }
     })
     .then(response => response.text())

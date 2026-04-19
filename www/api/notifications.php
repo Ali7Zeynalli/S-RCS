@@ -9,18 +9,19 @@
 // GitHub Raw URL for notifications (repo: S-RCS)
 $GITHUB_URL = 'https://raw.githubusercontent.com/Ali7Zeynalli/S-RCS/main/notifications.json';
 $CACHE_FILE = __DIR__ . '/../config/notifications_cache.json';
-$CACHE_TTL = 3600; // 1 hour cache
+$CACHE_TTL = 600; // 10 minutes cache (was 1 hour - too long for active releases)
 
 // Read current version from VERSION file (single source of truth)
 $VERSION_FILE = __DIR__ . '/../VERSION';
 $APP_VERSION = file_exists($VERSION_FILE) ? trim(file_get_contents($VERSION_FILE)) : '1.0.0';
 
 // Get notifications from GitHub or cache
-function getNotifications() {
+// $forceRefresh=true bypasses the cache (used by manual refresh button)
+function getNotifications($forceRefresh = false) {
     global $GITHUB_URL, $CACHE_FILE, $CACHE_TTL, $APP_VERSION;
-    
-    // Check if cache exists and is valid
-    if (file_exists($CACHE_FILE)) {
+
+    // Check if cache exists and is valid (unless forcing refresh)
+    if (!$forceRefresh && file_exists($CACHE_FILE)) {
         $cacheData = json_decode(file_get_contents($CACHE_FILE), true);
         if ($cacheData && isset($cacheData['timestamp'])) {
             $cacheAge = time() - $cacheData['timestamp'];
