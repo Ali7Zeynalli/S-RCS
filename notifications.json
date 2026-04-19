@@ -1,7 +1,29 @@
 {
-    "timestamp": 1768655692,
+    "timestamp": 1776153600,
     "data": {
         "notifications": [
+            {
+                "id": "5",
+                "title": "S-RCS v1.3.3 Released!",
+                "message": "Major update with real enterprise deployment hardening:\n\n- LDAP Connection Test button in installer (verify AD credentials before completing setup)\n- Step-by-step update instructions with copy-to-clipboard commands\n- Full i18n for update modal (5 languages: EN/AZ/DE/RU/TR)\n- Docker security hardening: proper SSL cert with SAN, ServerName fix, HTTPS redirect port correction\n- System identifier Docker compatibility (hostname hash fallback)\n- config.php removed from git tracking (security + clean clone)\n- Pre-made PowerShell test data generator (up to 10,000 AD objects)\n- GitHub notifications system fixed",
+                "category": "feature_updates",
+                "priority": 3,
+                "icon": "rocket",
+                "color": "success",
+                "link": "https:\/\/github.com\/Ali7Zeynalli\/S-RCS\/releases\/tag\/v1.3.3",
+                "created_at": "2026-04-19 14:00:00"
+            },
+            {
+                "id": "4",
+                "title": "S-RCS v1.3.2 - LDAP Pagination & Auto-Update Check",
+                "message": "Critical fixes for large-scale AD environments:\n\n- LDAP pagination for Groups, GPOs, OUs, Computers (supports 1000+ objects)\n- GPO listing optimization: 101 queries -> 2 queries (50x faster)\n- Auto Update Check with GitHub integration and footer badge\n- Report generation restored for large domains\n- Docker network tools added (ip, arp, ping)\n- SSL certificate hardening (CA:FALSE + SAN)",
+                "category": "feature_updates",
+                "priority": 2,
+                "icon": "bolt",
+                "color": "info",
+                "link": "https:\/\/github.com\/Ali7Zeynalli\/S-RCS\/releases\/tag\/v1.3.2",
+                "created_at": "2026-04-19 10:00:00"
+            },
             {
                 "id": "1",
                 "title": "S-RCS v1.3.0 Released!",

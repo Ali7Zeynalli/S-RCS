@@ -6,14 +6,18 @@
   * Written by [Ali Zeynalli] <[https://linkedin.com/in/ali7zeynalli]> [2025]
   */
 
-// GitHub Raw URL for notifications
-$GITHUB_URL = 'https://raw.githubusercontent.com/Ali7Zeynalli/SRC/main/notifications.json';
+// GitHub Raw URL for notifications (repo: S-RCS)
+$GITHUB_URL = 'https://raw.githubusercontent.com/Ali7Zeynalli/S-RCS/main/notifications.json';
 $CACHE_FILE = __DIR__ . '/../config/notifications_cache.json';
 $CACHE_TTL = 3600; // 1 hour cache
 
+// Read current version from VERSION file (single source of truth)
+$VERSION_FILE = __DIR__ . '/../VERSION';
+$APP_VERSION = file_exists($VERSION_FILE) ? trim(file_get_contents($VERSION_FILE)) : '1.0.0';
+
 // Get notifications from GitHub or cache
 function getNotifications() {
-    global $GITHUB_URL, $CACHE_FILE, $CACHE_TTL;
+    global $GITHUB_URL, $CACHE_FILE, $CACHE_TTL, $APP_VERSION;
     
     // Check if cache exists and is valid
     if (file_exists($CACHE_FILE)) {
@@ -36,7 +40,7 @@ function getNotifications() {
         CURLOPT_SSL_VERIFYHOST => false,
         CURLOPT_TIMEOUT => 10,
         CURLOPT_FOLLOWLOCATION => true,
-        CURLOPT_USERAGENT => 'S-RCS/1.3.0'
+        CURLOPT_USERAGENT => 'S-RCS/' . $APP_VERSION
     ]);
     
     $response = curl_exec($ch);

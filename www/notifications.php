@@ -17,9 +17,11 @@ if (!isset($_SESSION['ad_username'])) {
 $pageTitle = __('notifications_title');
 $activePage = 'notifications';
 include 'api/notifications.php';
-// Bildirişləri əldə et
+// Bildirişləri əldə et - JSON struct: { timestamp, data: { notifications: [...] } }
 $response = getNotifications();
-$notifications = $response['notifications'] ?? [];
+$notifications = $response['data']['notifications']
+    ?? $response['notifications']
+    ?? [];
 
 require_once('includes/header.php');
 ?>
