@@ -1377,6 +1377,39 @@ $lang = [
     'confirm_delete' => 'Emin misiniz?',
     'yes_delete' => 'Evet, sil!',
     'new_ticket' => 'Yeni Bilet',
+    // --- Update Check Modal (v1.3.2+) ---
+    'update_modal_title' => 'S-RCS — Yeni Sürüm Mevcut',
+    'update_current' => 'Mevcut',
+    'update_new' => 'Yeni',
+    'update_whats_new' => 'Yenilikler',
+    'update_before_title' => 'Güncellemeden önce:',
+    'update_before_sessions' => 'Hiçbir yöneticinin sistemi aktif olarak kullanmadığından emin olun',
+    'update_before_backup' => 'Yedekleme önerilir:',
+    'update_howto_title' => 'Nasıl Güncellenir',
+    'update_howto_intro' => 'S-RCS\'nin kurulu olduğu sunucuda bir terminal açın ve komutları sırayla çalıştırın:',
+    'update_step1' => 'S-RCS klasörüne gidin',
+    'update_step2' => 'En son kodu çekin',
+    'update_step3' => 'Konteynerleri durdurun',
+    'update_step3_safe' => 'Güvenli — verileriniz (mysql_data/, config.php) olduğu gibi kalır.',
+    'update_step4' => 'Yeniden oluşturun ve başlatın',
+    'update_step4_time' => '1-2 dakika sürer',
+    'update_step5' => 'Tarayıcıyı yenileyin (Ctrl+Shift+R)',
+    'update_all_in_one' => 'Hepsi birden:',
+    'update_copy' => 'Kopyala',
+    'update_troubleshoot' => 'Bir şeyler mi ters gitti?',
+    'update_troubleshoot_logs' => 'Logları kontrol et:',
+    'update_troubleshoot_restore' => 'Yedeği geri yükle:',
+    'update_troubleshoot_stuck' => 'Hâlâ sıkışık mı?',
+    'update_troubleshoot_issue' => 'GitHub\'da bir sorun bildir',
+    'update_btn_later' => 'Sonra',
+    'update_btn_github' => 'Sürümü Görüntüle',
+
+    // --- Footer Recommendations (v1.3.3+) ---
+    'footer_also_try' => 'Şunu da deneyin:',
+    'footer_dockgate_desc' => 'Docker yönetim arayüzü',
+
+    'footer_novusgate_desc' => 'Kendi Sunucunuzda WireGuard VPN',
+
 ];
 
 return $lang;

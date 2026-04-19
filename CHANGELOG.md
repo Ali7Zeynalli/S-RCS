@@ -4,6 +4,40 @@ All notable changes to S-RCS will be documented in this file.
 
 ---
 
+## [1.3.3] - 2026-04-19
+
+### ✨ New Features
+- 🧪 **LDAP Connection Test in Install Wizard** — Domain Settings step now has a "Test Connection" button. Users can verify AD credentials before proceeding instead of going blind through the whole wizard.
+  - Validates reachability (LDAPS/LDAP port)
+  - Verifies bind (username + password)
+  - Auto-detects `Base DN` from rootDSE
+  - Checks if the admin user is a member of the configured admin group
+  - Shows response time in milliseconds
+  - On failure: provides troubleshooting hints (firewall, SSL, credentials)
+
+### 🐛 Bug Fixes
+- **Installer POST 500 Error** — `detectWebServer()` used `$modules` without `global $modules;` declaration, causing undefined variable crash when backend tried to build mail instructions.
+- **System Identifier Docker Compatibility** — `getSystemIdentifiers()` assumed `/etc/machine-id`, `lsblk`, and `sudo dmidecode` would exist. In minimal Docker containers they often don't. Now falls back gracefully:
+  - `/etc/machine-id` → `/var/lib/dbus/machine-id` → hostname hash
+  - `lsblk` missing → `container-<hash>` placeholder
+  - `sudo dmidecode` → plain `dmidecode` → container hostname
+- **Install Wizard `fetchSystemInfo` null error** — `document.getElementById('summary_install_date')` crashed because the element didn't exist in HTML. Added `safeSetText()` / `safeGetValue()` helpers for null-safe DOM access.
+- **Update Check Modal i18n** — Previous modal had hardcoded English/Azerbaijani text ignoring the language system. Now fully integrated with `__()` helper, 25 new translation keys added to all 5 languages (en/az/de/ru/tr).
+
+### 🔧 Improvements
+- **Update Modal — Step-by-Step Instructions** — Replaced the one-line command with 5 numbered steps, each with its own copy-to-clipboard button. Includes backup recommendation, troubleshooting section, and "All-in-one" combined command for power users.
+- **config.php Security** — `www/config/config.php` removed from git tracking (contained secret_key, passwords, license_key in real deployments). Replaced with `www/includes/default-config.php` template. Entrypoint script creates `config.php` on first container start if missing.
+
+### 📋 How to Apply
+
+```bash
+git pull
+docker-compose down
+docker-compose up -d --build
+```
+
+---
+
 ## [1.3.2] - 2026-04-19
 
 ### 🐛 Bug Fixes — Deployment & Infrastructure

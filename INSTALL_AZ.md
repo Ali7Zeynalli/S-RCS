@@ -349,6 +349,18 @@ Installer avtomatik yoxlayacaq:
 
 ![Installer - Admin Group](www/PH/install%20group.png)
 
+#### 🧪 Bağlantı Testi (v1.3.3+)
+
+Növbəti addıma keçməzdən əvvəl **Test Connection** düyməsinə klikləyin. İnstaller aşağıdakıları yoxlayacaq:
+- Domain Controller 636 portunda əlçatandır
+- Admin məlumatları AD-də düzgün autentifikasiyadan keçir
+- `Base DN` rootDSE-dən avtomatik aşkarlanır
+- Admin hesabınız təyin edilmiş admin qrupun üzvüdür
+- Cavab müddəti və varsa xətaları troubleshooting təkliflərlə göstərilir
+
+Yaşıl "Connection Successful" mesajı görürsünüzsə, təhlükəsiz **Next** düyməsinə klikləyə bilərsiniz.
+Qırmızı xəta dəqiq problemi göstərir (yanlış şifrə, firewall portu bağlayır, sertifikat itmiş və s.).
+
 ### Addım 3: Database Settings
 
 > 📌 Bu sahələr `.env` faylından avtomatik yüklənir və readonly-dir.

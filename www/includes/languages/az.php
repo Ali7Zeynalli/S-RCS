@@ -1377,6 +1377,39 @@ $lang = [
     'confirm_delete' => 'Əminsiniz?',
     'yes_delete' => 'Bəli, sil!',
     'new_ticket' => 'Yeni Bilet',
+    // --- Update Check Modal (v1.3.2+) ---
+    'update_modal_title' => 'S-RCS — Yeni Versiya Mövcuddur',
+    'update_current' => 'Cari',
+    'update_new' => 'Yeni',
+    'update_whats_new' => 'Yeniliklər',
+    'update_before_title' => 'Yeniləmədən əvvəl:',
+    'update_before_sessions' => 'Sistemi heç bir admin istifadə etmir',
+    'update_before_backup' => 'Backup tövsiyə olunur:',
+    'update_howto_title' => 'Necə Yeniləmək',
+    'update_howto_intro' => 'S-RCS quraşdırılmış server-də terminal açın və əmrləri ardıcıllıqla icra edin:',
+    'update_step1' => 'S-RCS qovluğuna keç',
+    'update_step2' => 'Ən son kod-u çək',
+    'update_step3' => 'Konteynerləri dayandır',
+    'update_step3_safe' => 'Təhlükəsiz — dataniz (mysql_data/, config.php) toxunulmazdir.',
+    'update_step4' => 'Yenidən qur və başlat',
+    'update_step4_time' => '1-2 dəqiqə çəkir',
+    'update_step5' => 'Brauzeri yenilə (Ctrl+Shift+R)',
+    'update_all_in_one' => 'Hamısı birlikdə:',
+    'update_copy' => 'Kopyala',
+    'update_troubleshoot' => 'Problem yaşayırsan?',
+    'update_troubleshoot_logs' => 'Logları yoxla:',
+    'update_troubleshoot_restore' => 'Backup-u bərpa et:',
+    'update_troubleshoot_stuck' => 'Hələ də problem var?',
+    'update_troubleshoot_issue' => 'GitHub-da issue aç',
+    'update_btn_later' => 'Sonra',
+    'update_btn_github' => 'GitHub-da Bax',
+
+    // --- Footer Recommendations (v1.3.3+) ---
+    'footer_also_try' => 'Bunu da sınayın:',
+    'footer_dockgate_desc' => 'Docker idarəetmə interfeysi',
+
+    'footer_novusgate_desc' => 'Self-hosted WireGuard VPN',
+
 ];
 
 return $lang;

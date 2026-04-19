@@ -1377,6 +1377,39 @@ $lang = [
     'confirm_delete' => 'Sind Sie sicher?',
     'yes_delete' => 'Ja, löschen!',
     'new_ticket' => 'Neues Ticket',
+    // --- Update Check Modal (v1.3.2+) ---
+    'update_modal_title' => 'S-RCS — Neue Version Verfügbar',
+    'update_current' => 'Aktuell',
+    'update_new' => 'Neu',
+    'update_whats_new' => 'Was ist neu',
+    'update_before_title' => 'Vor dem Aktualisieren:',
+    'update_before_sessions' => 'Stellen Sie sicher, dass kein Admin das System aktiv nutzt',
+    'update_before_backup' => 'Sicherung empfohlen:',
+    'update_howto_title' => 'Wie aktualisieren',
+    'update_howto_intro' => 'Öffnen Sie ein Terminal auf dem Server, wo S-RCS installiert ist, und führen Sie diese Befehle der Reihe nach aus:',
+    'update_step1' => 'Zum S-RCS-Ordner wechseln',
+    'update_step2' => 'Neuesten Code abrufen',
+    'update_step3' => 'Container stoppen',
+    'update_step3_safe' => 'Sicher — Ihre Daten (mysql_data/, config.php) bleiben erhalten.',
+    'update_step4' => 'Neu erstellen und starten',
+    'update_step4_time' => 'Dauert 1-2 Minuten',
+    'update_step5' => 'Browser aktualisieren (Strg+Umschalt+R)',
+    'update_all_in_one' => 'Alles auf einmal:',
+    'update_copy' => 'Kopieren',
+    'update_troubleshoot' => 'Etwas ist schiefgelaufen?',
+    'update_troubleshoot_logs' => 'Logs prüfen:',
+    'update_troubleshoot_restore' => 'Backup wiederherstellen:',
+    'update_troubleshoot_stuck' => 'Immer noch Probleme?',
+    'update_troubleshoot_issue' => 'Problem auf GitHub melden',
+    'update_btn_later' => 'Später',
+    'update_btn_github' => 'Release anzeigen',
+
+    // --- Footer Recommendations (v1.3.3+) ---
+    'footer_also_try' => 'Probieren Sie auch:',
+    'footer_dockgate_desc' => 'Docker-Verwaltungs-UI',
+
+    'footer_novusgate_desc' => 'Self-hosted WireGuard VPN',
+
 ];
 
 return $lang;

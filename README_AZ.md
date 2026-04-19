@@ -22,15 +22,21 @@ Sistemin təməlində **sürət və sadəlik** fəlsəfəsi dayanır: demək ola
 - **"3-Klik" Effektivliyi**: Optimallaşdırılmış İstifadəçi Təcrübəsi (UX) dizaynı tapşırıqların ildırım sürəti ilə icrasını təmin edir.
 - **Mərkəzləşdirilmiş İdarəetmə**: İstifadəçi yaradılması, Qrup idarəçiliyi, OU strukturu və yerdəyişmələri (Move) tək bir paneldən idarə edilir.
 
-### 🆕 v1.3.2-də Yeniliklər
+### 🆕 v1.3.3-də Yeniliklər
 
-> 🔄 **Avtomatik Yenilik Yoxlaması** — Footer-də GitHub-da yeni versiya çıxdığı halda badge göstərilir. Üzərinə klikləyərək cari və uzaq versiya, son dəyişikliklər siyahısı görünür.
+> 🧪 **Quraşdırmada LDAP Bağlantı Testi** — Artıq kor-koranə quraşdırma yoxdur! Domain Settings mərhələsində "Test Connection" düyməsi var — AD məlumatlarını yoxlayır, rootDSE-dən `Base DN`-i avtomatik aşkarlayır, admin qrup üzvlüyünü yoxlayır və uğursuzluq zamanı konkret səbəbi göstərir.
 >
-> 🔐 **Production-Ready Deployment** — Düzgün SSL sertifikat (SAN + `CA:FALSE`), ServerName konfiqurasiyası, HTTPS redirect-in xüsusi port-larla doğru işləməsi, icazələri avtomatik düzəldən entrypoint script.
+> 🌍 **Update Modal Tam Dil Dəstəyi** — Update modal artıq dil sisteminə tabedir (İngilis / Azərbaycan / Alman / Rus / Türk). 25 yeni tərcümə açarı əlavə edildi.
 >
-> ⚡ **Enterprise Miqyas** — LDAP səhifələmə (`LDAP_CONTROL_PAGEDRESULTS`) Groups, GPOs, OUs və Computers üçün əlavə edildi — 1000+ obyekti olan domen-lərdə sürətlə işləyir. GPO siyahısı 50 dəfə sürətləndi (101 LDAP sorğu → 2).
+> 📋 **Addım-Addım Update Təlimatı** — Yeni versiya aşkar edildikdə modal-da 5 nömrəli addım, hər biri kopya-düyməsi ilə, backup tövsiyələri və troubleshooting bölməsi göstərilir.
 >
-> 🎫 **Tapşırıq İdarəetməsi (Helpdesk)** (v1.3.0-dan) — AD inteqrasiyası, audit loglama və status iş axınları ilə tam İT bilet sistemi.
+> 🔐 **Secret Təhlükəsizliyi** — `config/config.php` (secret_key, şifrələr, license key) git tracking-dən silindi. Konteyner ilk başlanğıcda template-dən avtomatik yaradılır.
+>
+> 🔄 **Avtomatik Yenilik Yoxlaması** (v1.3.2-dən) — GitHub-da yeni versiya çıxdıqda footer-də badge göstərilir.
+>
+> ⚡ **Enterprise Miqyas** (v1.3.2-dən) — LDAP səhifələmə Groups, GPOs, OUs, Computers üçün — 1000+ obyektlə işləyir. GPO siyahısı 50x sürətləndi.
+>
+> 🎫 **Tapşırıq İdarəetməsi (Helpdesk)** (v1.3.0-dan) — AD inteqrasiyası ilə tam İT bilet sistemi.
 >
 > 📋 [Tam dəyişiklik jurnalına bax](CHANGELOG.md)
 

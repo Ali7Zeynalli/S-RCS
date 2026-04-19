@@ -1377,6 +1377,39 @@ $lang = [
     'confirm_delete' => 'Are you sure?',
     'yes_delete' => 'Yes, delete it!',
     'new_ticket' => 'New Ticket',
+    // --- Update Check Modal (v1.3.2+) ---
+    'update_modal_title' => 'S-RCS — New Version Available',
+    'update_current' => 'Current',
+    'update_new' => 'New',
+    'update_whats_new' => 'What\'s New',
+    'update_before_title' => 'Before updating:',
+    'update_before_sessions' => 'Make sure no admin is actively using the system',
+    'update_before_backup' => 'Backup recommended:',
+    'update_howto_title' => 'How to Update',
+    'update_howto_intro' => 'Open a terminal on the server where S-RCS is installed and run these commands in order:',
+    'update_step1' => 'Go to S-RCS folder',
+    'update_step2' => 'Pull latest code',
+    'update_step3' => 'Stop containers',
+    'update_step3_safe' => 'Safe — your data (mysql_data/, config.php) stays intact.',
+    'update_step4' => 'Rebuild and start',
+    'update_step4_time' => 'Takes 1-2 minutes',
+    'update_step5' => 'Refresh browser (Ctrl+Shift+R)',
+    'update_all_in_one' => 'All-in-one:',
+    'update_copy' => 'Copy',
+    'update_troubleshoot' => 'Something went wrong?',
+    'update_troubleshoot_logs' => 'Check logs:',
+    'update_troubleshoot_restore' => 'Restore backup:',
+    'update_troubleshoot_stuck' => 'Still stuck?',
+    'update_troubleshoot_issue' => 'Open an issue on GitHub',
+    'update_btn_later' => 'Later',
+    'update_btn_github' => 'View Release',
+
+    // --- Footer Recommendations (v1.3.3+) ---
+    'footer_also_try' => 'Also try:',
+    'footer_dockgate_desc' => 'Docker management UI',
+
+    'footer_novusgate_desc' => 'Self-hosted WireGuard VPN',
+
 ];
 
 return $lang;

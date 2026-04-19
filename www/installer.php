@@ -69,14 +69,29 @@ function getSystemIdentifiers() {
     try {
         if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
             // Windows identifiers
-            $identifiers['machine_id'] = trim(shell_exec('reg query HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Cryptography /v MachineGuid'));
-            $identifiers['disk_serial'] = trim(shell_exec('wmic diskdrive get serialnumber'));
-            $identifiers['motherboard_id'] = trim(shell_exec('wmic baseboard get serialnumber'));
+            $identifiers['machine_id'] = trim((string)@shell_exec('reg query HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Cryptography /v MachineGuid'));
+            $identifiers['disk_serial'] = trim((string)@shell_exec('wmic diskdrive get serialnumber'));
+            $identifiers['motherboard_id'] = trim((string)@shell_exec('wmic baseboard get serialnumber'));
         } else {
-            // Linux identifiers
-            $identifiers['machine_id'] = trim(file_get_contents('/etc/machine-id'));
-            $identifiers['disk_serial'] = trim(shell_exec('lsblk -o UUID | head -n2 | tail -n1'));
-            $identifiers['motherboard_id'] = trim(shell_exec('sudo dmidecode -s baseboard-serial-number'));
+            // Linux identifiers — hər command fail ola bilər (Docker container-də
+            // /etc/machine-id, lsblk, sudo/dmidecode olmaya bilər)
+            if (is_readable('/etc/machine-id')) {
+                $identifiers['machine_id'] = trim((string)@file_get_contents('/etc/machine-id'));
+            } elseif (is_readable('/var/lib/dbus/machine-id')) {
+                $identifiers['machine_id'] = trim((string)@file_get_contents('/var/lib/dbus/machine-id'));
+            } else {
+                // Fallback: hostname-based hash (stable per-container)
+                $identifiers['machine_id'] = hash('sha256', gethostname() . php_uname('n'));
+            }
+
+            $identifiers['disk_serial'] = trim((string)@shell_exec('lsblk -o UUID 2>/dev/null | head -n2 | tail -n1'));
+            if (!$identifiers['disk_serial']) {
+                $identifiers['disk_serial'] = 'container-' . substr(hash('sha256', gethostname()), 0, 12);
+            }
+
+            // dmidecode sudo-suz işləmir (Docker-də yox), try without sudo first
+            $mb = (string)@shell_exec('dmidecode -s baseboard-serial-number 2>/dev/null');
+            $identifiers['motherboard_id'] = trim($mb) ?: 'container-' . php_uname('n');
         }
     } catch (Exception $e) {
         error_log("Error getting system identifiers: " . $e->getMessage());
@@ -239,6 +254,7 @@ try {
 
         // Detect web server and environment
         function detectWebServer() {
+            global $modules;  // Access outer-scope $modules array — otherwise undefined
             $server_software = $_SERVER['SERVER_SOFTWARE'] ?? '';
             $server_info = [
                 'type' => 'Unknown',
@@ -488,9 +504,137 @@ try {
         exit;
     } 
     elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
+
+        // --- LDAP Connection Test (pre-installation check) ---
+        if (isset($_GET['action']) && $_GET['action'] === 'test_ldap') {
+            $input = json_decode(file_get_contents('php://input'), true);
+            $start = microtime(true);
+
+            try {
+                if (!$input || empty($input['domain_controllers'][0])) {
+                    throw new Exception('Domain Controller IP is required');
+                }
+                if (empty($input['admin_username']) || empty($input['admin_password'])) {
+                    throw new Exception('Admin credentials are required');
+                }
+
+                $dc = $input['domain_controllers'][0];
+                $port = (int)($input['port'] ?? 636);
+                $domain = $input['domain_name'] ?? '';
+                $username = $input['admin_username'];
+                $password = $input['admin_password'];
+
+                // Build bind DN: user@domain (UPN)
+                $bind_dn = $username;
+                if ($domain && strpos($username, '@') === false) {
+                    $bind_dn = $username . '@' . $domain;
+                }
+
+                // Protocol selection
+                $scheme = ($port === 636) ? 'ldaps' : 'ldap';
+                $ldap_url = "{$scheme}://{$dc}:{$port}";
+
+                // Relax TLS for self-signed AD certs (common in internal deployments)
+                putenv('LDAPTLS_REQCERT=never');
+
+                $ldap = @ldap_connect($ldap_url);
+                if (!$ldap) {
+                    throw new Exception("Could not initialize LDAP connection to {$ldap_url}");
+                }
+
+                ldap_set_option($ldap, LDAP_OPT_PROTOCOL_VERSION, 3);
+                ldap_set_option($ldap, LDAP_OPT_REFERRALS, 0);
+                ldap_set_option($ldap, LDAP_OPT_NETWORK_TIMEOUT, 5);
+
+                // Attempt bind
+                $bind_result = @ldap_bind($ldap, $bind_dn, $password);
+                if (!$bind_result) {
+                    $err = ldap_error($ldap);
+                    $errno = ldap_errno($ldap);
+                    @ldap_unbind($ldap);
+
+                    // Friendly error mapping
+                    $hints = [];
+                    if ($errno === 49) {
+                        $hints[] = 'Wrong username or password';
+                        $hints[] = 'Account may be locked or disabled';
+                    } elseif (stripos($err, 'Can\'t contact') !== false) {
+                        $hints[] = "Domain Controller {$dc} is not reachable";
+                        $hints[] = "Check firewall: port {$port} must be open";
+                        $hints[] = "Verify DC IP is correct and reachable from this server";
+                    } elseif (stripos($err, 'TLS') !== false || stripos($err, 'SSL') !== false) {
+                        $hints[] = 'LDAPS certificate issue — check AD Certificate Services is running';
+                        $hints[] = 'Firewall may be blocking port 636';
+                    }
+
+                    echo json_encode([
+                        'success' => false,
+                        'error'   => $err ?: 'Authentication failed',
+                        'hints'   => $hints
+                    ]);
+                    exit;
+                }
+
+                // Try to auto-detect base_dn (rootDSE namingContexts)
+                $base_dn = 'DC=' . str_replace('.', ',DC=', $domain);
+                $root_search = @ldap_read($ldap, '', '(objectclass=*)', ['defaultNamingContext']);
+                if ($root_search) {
+                    $root_entries = @ldap_get_entries($ldap, $root_search);
+                    if (!empty($root_entries[0]['defaultnamingcontext'][0])) {
+                        $base_dn = $root_entries[0]['defaultnamingcontext'][0];
+                    }
+                }
+
+                // Optional: check admin group membership
+                $admin_in_group = false;
+                $admin_group = $input['admin_group'] ?? 'Administrators';
+                if ($base_dn && $admin_group) {
+                    $group_filter = "(&(objectClass=user)(sAMAccountName=" . ldap_escape($username, '', LDAP_ESCAPE_FILTER) . "))";
+                    $user_search = @ldap_search($ldap, $base_dn, $group_filter, ['memberOf']);
+                    if ($user_search) {
+                        $user_entries = @ldap_get_entries($ldap, $user_search);
+                        if (!empty($user_entries[0]['memberof'])) {
+                            foreach ($user_entries[0]['memberof'] as $k => $grp) {
+                                if ($k === 'count') continue;
+                                if (stripos($grp, 'CN=' . $admin_group . ',') === 0) {
+                                    $admin_in_group = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                $elapsed_ms = round((microtime(true) - $start) * 1000);
+
+                @ldap_unbind($ldap);
+
+                echo json_encode([
+                    'success' => true,
+                    'details' => [
+                        'server'           => $ldap_url,
+                        'bind_dn'          => $bind_dn,
+                        'base_dn'          => $base_dn,
+                        'response_time_ms' => $elapsed_ms,
+                        'admin_in_group'   => $admin_in_group,
+                    ]
+                ]);
+                exit;
+
+            } catch (Exception $e) {
+                echo json_encode([
+                    'success' => false,
+                    'error'   => $e->getMessage(),
+                    'hints'   => []
+                ]);
+                exit;
+            }
+        }
+
+        // --- Regular installation POST ---
         try {
             $input = json_decode(file_get_contents('php://input'), true);
-            
+
             if (!$input) {
                 throw new Exception('Invalid installation data');
             }

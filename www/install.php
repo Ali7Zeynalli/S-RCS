@@ -465,6 +465,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     </div>
                                 </div>
                             </div>
+
+                            <!-- LDAP Connection Test -->
+                            <div class="border-top pt-3 mt-3">
+                                <div class="d-flex align-items-center justify-content-between mb-2">
+                                    <div>
+                                        <h6 class="mb-0">
+                                            <i class="fas fa-plug text-primary me-2"></i>Test Connection
+                                        </h6>
+                                        <small class="text-muted">
+                                            Verify your credentials can connect to Active Directory before proceeding.
+                                        </small>
+                                    </div>
+                                    <button type="button" class="btn btn-outline-primary" id="testLdapBtn">
+                                        <i class="fas fa-play me-1"></i>Test Connection
+                                    </button>
+                                </div>
+                                <div id="testLdapResult" class="mt-3" style="display: none;"></div>
+                            </div>
                         </form>
                     </div>
 
@@ -763,6 +781,108 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Check system requirements on load
         checkRequirements();
+
+        // --- LDAP Connection Test Handler ---
+        const testLdapBtn = document.getElementById('testLdapBtn');
+        if (testLdapBtn) {
+            testLdapBtn.addEventListener('click', async function() {
+                const resultDiv = document.getElementById('testLdapResult');
+                const dcValue = document.getElementById('domain_controllers').value.trim();
+
+                // Client-side validation
+                const payload = {
+                    domain_controllers: dcValue ? dcValue.split(',').map(ip => ip.trim()) : [],
+                    domain_name: document.getElementById('domain_name').value.trim(),
+                    port: parseInt(document.getElementById('port').value) || 636,
+                    admin_username: document.getElementById('admin_username').value.trim(),
+                    admin_password: document.getElementById('admin_password').value
+                };
+
+                if (!payload.domain_controllers.length || !payload.domain_name ||
+                    !payload.admin_username || !payload.admin_password) {
+                    resultDiv.style.display = 'block';
+                    resultDiv.innerHTML = `
+                        <div class="alert alert-warning mb-0">
+                            <i class="fas fa-exclamation-circle me-2"></i>
+                            Please fill in all Domain Settings and Admin credentials before testing.
+                        </div>`;
+                    return;
+                }
+
+                // Loading state
+                this.disabled = true;
+                const originalHtml = this.innerHTML;
+                this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Testing...';
+                resultDiv.style.display = 'block';
+                resultDiv.innerHTML = `
+                    <div class="alert alert-info mb-0">
+                        <i class="fas fa-spinner fa-spin me-2"></i>
+                        Connecting to <code>${escapeHtmlSimple(payload.domain_controllers[0])}:${payload.port}</code>...
+                    </div>`;
+
+                try {
+                    const response = await fetch('installer.php?action=test_ldap', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: JSON.stringify(payload)
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        resultDiv.innerHTML = `
+                            <div class="alert alert-success mb-0">
+                                <h6 class="mb-2">
+                                    <i class="fas fa-check-circle me-2"></i>Connection Successful!
+                                </h6>
+                                <ul class="mb-0 small">
+                                    <li><strong>Server:</strong> ${escapeHtmlSimple(data.details?.server || '—')}</li>
+                                    <li><strong>Bind DN:</strong> ${escapeHtmlSimple(data.details?.bind_dn || '—')}</li>
+                                    <li><strong>Base DN detected:</strong> <code>${escapeHtmlSimple(data.details?.base_dn || '—')}</code></li>
+                                    <li><strong>Response time:</strong> ${data.details?.response_time_ms || '—'} ms</li>
+                                    ${data.details?.admin_in_group ? '<li><i class="fas fa-shield-alt text-success"></i> User is member of admin group</li>' : ''}
+                                </ul>
+                            </div>`;
+                    } else {
+                        resultDiv.innerHTML = `
+                            <div class="alert alert-danger mb-0">
+                                <h6 class="mb-2">
+                                    <i class="fas fa-times-circle me-2"></i>Connection Failed
+                                </h6>
+                                <p class="mb-2"><strong>Error:</strong> ${escapeHtmlSimple(data.error || 'Unknown error')}</p>
+                                ${data.hints && data.hints.length > 0 ? `
+                                    <div class="small">
+                                        <strong>Possible causes:</strong>
+                                        <ul class="mb-0 mt-1">
+                                            ${data.hints.map(h => '<li>' + escapeHtmlSimple(h) + '</li>').join('')}
+                                        </ul>
+                                    </div>` : ''}
+                            </div>`;
+                    }
+                } catch (error) {
+                    resultDiv.innerHTML = `
+                        <div class="alert alert-danger mb-0">
+                            <i class="fas fa-times-circle me-2"></i>
+                            <strong>Network error:</strong> ${escapeHtmlSimple(error.message)}
+                        </div>`;
+                } finally {
+                    this.disabled = false;
+                    this.innerHTML = originalHtml;
+                }
+            });
+        }
+
+        // Simple HTML escape (reusable)
+        function escapeHtmlSimple(s) {
+            if (s === null || s === undefined) return '';
+            const div = document.createElement('div');
+            div.textContent = String(s);
+            return div.innerHTML;
+        }
 
         async function submitInstallation() {
             // Get all form data
@@ -1155,24 +1275,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
+        // Helper — DOM elementinə güvənli şəkildə mətn yaz (null element olsa crash etməsin)
+        function safeSetText(id, value) {
+            const el = document.getElementById(id);
+            if (el) el.textContent = value;
+        }
+        function safeGetValue(id, fallback) {
+            const el = document.getElementById(id);
+            return (el && el.value) ? el.value : fallback;
+        }
+
         // Update summary data function
         function updateSummaryData() {
-            // Get entered data
             // Domain data
-            document.getElementById('summary_domain_controller').textContent = document.getElementById('domain_controllers').value || 'Not set';
-            document.getElementById('summary_domain_name').textContent = document.getElementById('domain_name').value || 'Not set';
-            document.getElementById('summary_admin_username').textContent = document.getElementById('admin_username').value || 'Not set';
-            document.getElementById('summary_admin_group').textContent = document.getElementById('admin_group').value || 'Administrators';
-            
+            safeSetText('summary_domain_controller', safeGetValue('domain_controllers', 'Not set'));
+            safeSetText('summary_domain_name', safeGetValue('domain_name', 'Not set'));
+            safeSetText('summary_admin_username', safeGetValue('admin_username', 'Not set'));
+            safeSetText('summary_admin_group', safeGetValue('admin_group', 'Administrators'));
+
             // Database data
-            document.getElementById('summary_db_host').textContent = document.getElementById('db_host').value || 'localhost';
-            document.getElementById('summary_db_name').textContent = document.getElementById('db_name').value || 'ad_management';
-            document.getElementById('summary_db_user').textContent = document.getElementById('db_user').value || 'root';
-            
+            safeSetText('summary_db_host', safeGetValue('db_host', 'localhost'));
+            safeSetText('summary_db_name', safeGetValue('db_name', 'ad_management'));
+            safeSetText('summary_db_user', safeGetValue('db_user', 'root'));
+
             // Fetch system info
             fetchSystemInfo();
         }
-        
+
         // Fetch system info function
         async function fetchSystemInfo() {
             try {
@@ -1183,22 +1312,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         'X-Requested-With': 'XMLHttpRequest'
                     }
                 });
-                
+
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
-                
+
                 const data = await response.json();
-                
-                if (data.success) {
-                    // Set system data
-                    document.getElementById('summary_os').textContent = data.system_info.os.name + ' ' + data.system_info.os.version;
-                    document.getElementById('summary_web_server').textContent = data.system_info.server.software;
-                    document.getElementById('summary_php_version').textContent = data.system_info.php.version;
-                    document.getElementById('summary_hostname').textContent = data.system_info.hostname || 'Unknown';
-                    document.getElementById('summary_server_ip').textContent = data.system_info.server_ip || 'Unknown';
-                    document.getElementById('summary_mac_address').textContent = data.system_info.mac_address || 'Unknown';
-                    document.getElementById('summary_install_date').textContent = new Date().toLocaleString();
+
+                if (data.success && data.system_info) {
+                    const si = data.system_info;
+                    // Null-safe — element HTML-də yoxdursa crash olmur
+                    safeSetText('summary_os', (si.os?.name || '') + ' ' + (si.os?.version || ''));
+                    safeSetText('summary_web_server', si.server?.software || 'Unknown');
+                    safeSetText('summary_php_version', si.php?.version || 'Unknown');
+                    safeSetText('summary_hostname', si.hostname || 'Unknown');
+                    safeSetText('summary_server_ip', si.server_ip || 'Unknown');
+                    safeSetText('summary_mac_address', si.mac_address || 'Unknown');
+                    safeSetText('summary_install_date', new Date().toLocaleString());
                 }
             } catch (error) {
                 console.error('Error fetching system info:', error);

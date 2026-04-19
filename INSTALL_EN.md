@@ -347,6 +347,18 @@ The installer will automatically check:
 
 ![Installer - Admin Group](www/PH/install%20group.png)
 
+#### 🧪 Test Connection (v1.3.3+)
+
+Before proceeding to the next step, click the **Test Connection** button. The installer will:
+- Verify the Domain Controller is reachable on port 636
+- Authenticate your admin credentials against AD
+- Auto-detect the `Base DN` from rootDSE
+- Check if your admin account is a member of the configured admin group
+- Report response time and any errors with troubleshooting hints
+
+A green "Connection Successful" message means you can safely click **Next**.
+A red error provides the exact issue (wrong password, firewall blocking port, missing cert, etc.).
+
 ### Step 3: Database Settings
 
 > 📌 These fields are automatically loaded from the `.env` file and are read-only.

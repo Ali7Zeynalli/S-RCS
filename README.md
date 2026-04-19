@@ -22,15 +22,21 @@ The system is built on a core philosophy of **speed and simplicity**: virtually 
 - **"3-Click" Efficiency**: Optimized UX design ensures rapid execution of tasks.
 - **Centralized Management**: Handle User creation, Group management, OU structuring, and movements from a single dashboard.
 
-### 🆕 What's New in v1.3.2
+### 🆕 What's New in v1.3.3
 
-> 🔄 **Auto Update Check** — Footer displays a badge when a new version is available on GitHub. Click to see the current vs. remote version and recent changelog entries.
+> 🧪 **LDAP Connection Test in Installer** — No more blind installations! The Domain Settings step now has a "Test Connection" button that validates your AD credentials, auto-detects `Base DN` from rootDSE, checks admin group membership, and reports failures with troubleshooting hints — before you finish the wizard.
 >
-> 🔐 **Production-Ready Deployment** — Proper SSL certificate (SAN + `CA:FALSE`), ServerName configured, HTTPS redirect handles custom ports correctly, entrypoint script auto-fixes permissions.
+> 🌍 **Full i18n for Update Modal** — Update check modal now respects the language system (English / Azerbaijani / German / Russian / Turkish). 25 new translation keys added.
 >
-> ⚡ **Enterprise Scalability** — LDAP pagination (`LDAP_CONTROL_PAGEDRESULTS`) added for Groups, GPOs, OUs, and Computers — works smoothly for domains with 1000+ objects. GPO listing got a 50x performance boost (101 LDAP queries → 2).
+> 📋 **Step-by-Step Update Instructions** — When a new version is detected, the modal shows 5 numbered steps with copy-to-clipboard buttons for each command, plus backup recommendations and troubleshooting guidance.
 >
-> 🎫 **Task Management (Helpdesk)** (since v1.3.0) — Full IT ticketing system with AD integration, audit logging, and status workflows.
+> 🔐 **Secret Safety** — `config/config.php` (containing secret_key, passwords, license key) removed from git tracking. Replaced with a clean template auto-generated on first container start.
+>
+> 🔄 **Auto Update Check** (since v1.3.2) — Footer badge appears when a new version is available on GitHub.
+>
+> ⚡ **Enterprise Scalability** (since v1.3.2) — LDAP pagination for Groups, GPOs, OUs, Computers — works with 1000+ objects. 50x faster GPO listing.
+>
+> 🎫 **Task Management (Helpdesk)** (since v1.3.0) — Full IT ticketing system with AD integration.
 >
 > 📋 [See full changelog](CHANGELOG.md)
 
