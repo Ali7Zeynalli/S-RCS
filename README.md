@@ -22,8 +22,17 @@ The system is built on a core philosophy of **speed and simplicity**: virtually 
 - **"3-Click" Efficiency**: Optimized UX design ensures rapid execution of tasks.
 - **Centralized Management**: Handle User creation, Group management, OU structuring, and movements from a single dashboard.
 
-### 🆕 What's New in v1.3.0
-> 🎫 **Task Management (Helpdesk)** - Full IT ticketing system with AD integration, audit logging, and status workflows. [See Changelog](CHANGELOG.md)
+### 🆕 What's New in v1.3.2
+
+> 🔄 **Auto Update Check** — Footer displays a badge when a new version is available on GitHub. Click to see the current vs. remote version and recent changelog entries.
+>
+> 🔐 **Production-Ready Deployment** — Proper SSL certificate (SAN + `CA:FALSE`), ServerName configured, HTTPS redirect handles custom ports correctly, entrypoint script auto-fixes permissions.
+>
+> ⚡ **Enterprise Scalability** — LDAP pagination (`LDAP_CONTROL_PAGEDRESULTS`) added for Groups, GPOs, OUs, and Computers — works smoothly for domains with 1000+ objects. GPO listing got a 50x performance boost (101 LDAP queries → 2).
+>
+> 🎫 **Task Management (Helpdesk)** (since v1.3.0) — Full IT ticketing system with AD integration, audit logging, and status workflows.
+>
+> 📋 [See full changelog](CHANGELOG.md)
 
 ## 🚀 Key Features
 

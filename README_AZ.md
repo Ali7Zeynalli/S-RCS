@@ -22,8 +22,17 @@ Sistemin təməlində **sürət və sadəlik** fəlsəfəsi dayanır: demək ola
 - **"3-Klik" Effektivliyi**: Optimallaşdırılmış İstifadəçi Təcrübəsi (UX) dizaynı tapşırıqların ildırım sürəti ilə icrasını təmin edir.
 - **Mərkəzləşdirilmiş İdarəetmə**: İstifadəçi yaradılması, Qrup idarəçiliyi, OU strukturu və yerdəyişmələri (Move) tək bir paneldən idarə edilir.
 
-### 🆕 v1.3.0-da Yeniliklər
-> 🎫 **Tapşırıq İdarəetməsi (Helpdesk)** - AD inteqrasiyası, audit loglama və status iş axınları ilə tam İT bilet sistemi. [Dəyişiklik Jurnalına Bax](CHANGELOG_AZ.md)
+### 🆕 v1.3.2-də Yeniliklər
+
+> 🔄 **Avtomatik Yenilik Yoxlaması** — Footer-də GitHub-da yeni versiya çıxdığı halda badge göstərilir. Üzərinə klikləyərək cari və uzaq versiya, son dəyişikliklər siyahısı görünür.
+>
+> 🔐 **Production-Ready Deployment** — Düzgün SSL sertifikat (SAN + `CA:FALSE`), ServerName konfiqurasiyası, HTTPS redirect-in xüsusi port-larla doğru işləməsi, icazələri avtomatik düzəldən entrypoint script.
+>
+> ⚡ **Enterprise Miqyas** — LDAP səhifələmə (`LDAP_CONTROL_PAGEDRESULTS`) Groups, GPOs, OUs və Computers üçün əlavə edildi — 1000+ obyekti olan domen-lərdə sürətlə işləyir. GPO siyahısı 50 dəfə sürətləndi (101 LDAP sorğu → 2).
+>
+> 🎫 **Tapşırıq İdarəetməsi (Helpdesk)** (v1.3.0-dan) — AD inteqrasiyası, audit loglama və status iş axınları ilə tam İT bilet sistemi.
+>
+> 📋 [Tam dəyişiklik jurnalına bax](CHANGELOG.md)
 
 ## 🚀 Əsas Xüsusiyyətlər
 
