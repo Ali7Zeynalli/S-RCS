@@ -106,10 +106,11 @@ function getAllOUs($ldap_conn) {
             continue;
         }
         
-        // Normal container processing
+        // Normal container processing - member count (with warning suppression)
+        // Some OUs may not be readable; @ suppresses warnings that would break JSON
         $memberFilter = "(|(objectClass=user)(objectClass=group)(objectClass=computer))";
-        $memberSearch = ldap_search($ldap_conn, $dn, $memberFilter);
-        $memberCount = ldap_count_entries($ldap_conn, $memberSearch);
+        $memberSearch = @ldap_search($ldap_conn, $dn, $memberFilter);
+        $memberCount = $memberSearch ? @ldap_count_entries($ldap_conn, $memberSearch) : 0;
         
         // Format OU path for display
         $path = formatOUPath($dn);
@@ -128,7 +129,9 @@ function getAllOUs($ldap_conn) {
             }
         }
         
-        $isOU = in_array('organizationalUnit', $entry['objectclass']);
+        // objectclass may be missing on some entries - safe access
+        $objectClasses = isset($entry['objectclass']) && is_array($entry['objectclass']) ? $entry['objectclass'] : [];
+        $isOU = in_array('organizationalUnit', $objectClasses);
         
         $ous[] = [
             'name' => $name,
