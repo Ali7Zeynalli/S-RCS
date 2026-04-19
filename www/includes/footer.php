@@ -22,70 +22,71 @@ if (file_exists($version_file)) {
     </div>
 </div>
 
-<footer class="footer mt-auto py-2 bg-light">
-    <div class="container">
-        <div class="row align-items-center">
-            <div class="col-md-4 text-start">
-                <div class="d-flex flex-column flex-md-row align-items-center align-items-md-start gap-2">
-                    <span class="text-muted small">
-                        <i class="fas fa-copyright me-1"></i><?php echo __('footer_copyright'); ?>
-                    </span>
-                  
-                </div>
-            </div>
-            <div class="col-md-4 text-center">
-                <div class="btn-group">
-                    <a href="contact.php" class="btn btn-outline-primary btn-sm py-1 px-2">
-                        <i class="fas fa-envelope me-1"></i>
-                        <?php echo __('footer_contact'); ?>
-                    </a>
-                    &nbsp; &nbsp;
-                    <a href="feedback.php" class="btn btn-outline-primary btn-sm py-1 px-2">
-                        <i class="fas fa-comment-alt me-1"></i>
-                        <?php echo __('footer_feedback'); ?>
-                    </a>
-                    &nbsp; &nbsp;
-                    <a href="https://ali7zeynalli.github.io/SRCS/docs.html#intro" target="_blank" class="btn btn-outline-info btn-sm py-1 px-2">
-                        <i class="fas fa-book me-1"></i>
-                        <?php echo __('footer_docs'); ?>
-                    </a>
-                </div>
-                <div class="mt-2 small text-nowrap" style="white-space:nowrap;">
-                    <span class="text-muted"><?php echo __('footer_also_try'); ?></span>
-                    <a href="https://github.com/Ali7Zeynalli/dockgate" target="_blank" rel="noopener" class="text-decoration-none ms-2" title="DockGate — <?php echo __('footer_dockgate_desc'); ?>">
-                        <i class="fab fa-docker" style="color: #2496ED;"></i>
-                        <strong class="text-primary">DockGate</strong>
-                    </a>
-                    <span class="text-muted mx-1">·</span>
-                    <a href="https://github.com/Ali7Zeynalli/NovusGate" target="_blank" rel="noopener" class="text-decoration-none" title="NovusGate — <?php echo __('footer_novusgate_desc'); ?>">
-                        <i class="fas fa-shield-halved" style="color: #88171A;"></i>
-                        <strong style="color: #88171A;">NovusGate</strong>
-                    </a>
-                </div>
-            </div>
-            <div class="col-md-4 text-end">
-                <!-- LinkedIn -->
-                <a href="https://linkedin.com/in/ali7zeynalli" target="_blank" rel="noopener" class="text-decoration-none me-2" title="LinkedIn — Ali Zeynalli">
-                    <i class="fab fa-linkedin" style="color: #0A66C2;"></i>
-                    <span class="text-primary small"><?php echo __('footer_website'); ?></span>
+<footer class="footer mt-auto py-2 bg-light border-top">
+    <div class="container-fluid px-3">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2" style="font-size: 0.85rem;">
+
+            <!-- LEFT: Copyright -->
+            <span class="text-muted">
+                <i class="fas fa-copyright me-1"></i><?php echo __('footer_copyright'); ?>
+            </span>
+
+            <!-- CENTER: Action buttons -->
+            <div class="d-flex align-items-center gap-2">
+                <a href="contact.php" class="btn btn-outline-primary btn-sm py-0 px-2">
+                    <i class="fas fa-envelope me-1"></i><?php echo __('footer_contact'); ?>
                 </a>
+                <a href="feedback.php" class="btn btn-outline-primary btn-sm py-0 px-2">
+                    <i class="fas fa-comment-alt me-1"></i><?php echo __('footer_feedback'); ?>
+                </a>
+                <a href="https://ali7zeynalli.github.io/SRCS/docs.html#intro" target="_blank" class="btn btn-outline-info btn-sm py-0 px-2">
+                    <i class="fas fa-book me-1"></i><?php echo __('footer_docs'); ?>
+                </a>
+            </div>
+
+            <!-- RIGHT: Social + Version + Also Try + Update -->
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <!-- LinkedIn -->
+                <a href="https://linkedin.com/in/ali7zeynalli" target="_blank" rel="noopener" class="text-decoration-none" title="LinkedIn - Ali Zeynalli">
+                    <i class="fab fa-linkedin" style="color: #0A66C2;"></i>
+                    <span class="text-primary"><?php echo __('footer_website'); ?></span>
+                </a>
+
+                <span class="text-muted">|</span>
 
                 <!-- GitHub -->
-                <a href="https://github.com/Ali7Zeynalli/S-RCS" target="_blank" rel="noopener" class="text-decoration-none me-2" title="GitHub — S-RCS Repository">
+                <a href="https://github.com/Ali7Zeynalli/S-RCS" target="_blank" rel="noopener" class="text-decoration-none" title="GitHub - S-RCS Repository">
                     <i class="fab fa-github" style="color: #24292F;"></i>
-                    <span class="small text-dark">GitHub</span>
+                    <span class="text-dark">GitHub</span>
                 </a>
 
+                <span class="text-muted">|</span>
+
                 <!-- Version -->
-                <span class="text-muted small version-badge" id="srcsVersionBadge" data-current-version="<?php echo htmlspecialchars($version); ?>">
+                <span class="text-muted version-badge" id="srcsVersionBadge" data-current-version="<?php echo htmlspecialchars($version); ?>">
                     <i class="fas fa-code-branch me-1"></i><?php echo __('footer_version'); ?><?php echo htmlspecialchars($version); ?>
                 </span>
 
-                <!-- Update badge -->
-                <a href="#" id="srcsUpdateBadge" class="badge bg-success text-decoration-none ms-2" style="display:none;" data-bs-toggle="modal" data-bs-target="#srcsUpdateModal" title="New update available">
+                <!-- Update badge (shown only when update available) -->
+                <a href="#" id="srcsUpdateBadge" class="badge bg-success text-decoration-none" style="display:none;" data-bs-toggle="modal" data-bs-target="#srcsUpdateModal" title="New update available">
                     <i class="fas fa-arrow-up me-1"></i>UPDATE
                 </a>
+
+                <span class="text-muted">|</span>
+
+                <!-- Also Try: DockGate + NovusGate (after version) -->
+                <span class="text-muted small"><?php echo __('footer_also_try'); ?></span>
+                <a href="https://github.com/Ali7Zeynalli/dockgate" target="_blank" rel="noopener" class="text-decoration-none" title="DockGate - <?php echo __('footer_dockgate_desc'); ?>">
+                    <i class="fab fa-docker" style="color: #2496ED;"></i>
+                    <strong class="text-primary">DockGate</strong>
+                </a>
+                <span class="text-muted">·</span>
+                <a href="https://github.com/Ali7Zeynalli/NovusGate" target="_blank" rel="noopener" class="text-decoration-none" title="NovusGate - <?php echo __('footer_novusgate_desc'); ?>">
+                    <i class="fas fa-shield-halved" style="color: #88171A;"></i>
+                    <strong style="color: #88171A;">NovusGate</strong>
+                </a>
             </div>
+
         </div>
     </div>
 </footer>
