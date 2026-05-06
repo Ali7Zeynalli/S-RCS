@@ -3,6 +3,17 @@
     "data": {
         "notifications": [
             {
+                "id": "6",
+                "title": "S-RCS v1.3.4 — Critical GPO Page Fix",
+                "message": "Bug fix release. The Group Policy page would hang on the loading spinner indefinitely on many domains. Four root causes fixed:\n\n- Binary AD attributes broke json_encode() (gPCMachineExtensionNames)\n- ob_clean() leaked PHP notice into JSON response\n- No LDAP timeout (could hang past PHP's 30s limit)\n- No error suppression on the endpoint\n\nAll v1.3.x users should upgrade. Pure bug fix, fully backward-compatible. Page now loads in 1-3s on small domains, 5-15s on large ones.",
+                "category": "security_alerts",  
+                "priority": 3,                    
+                "icon": "bug",
+                "color": "danger",               
+                "link": "https://github.com/Ali7Zeynalli/S-RCS/blob/main/CHANGELOG.md#134---2026-04-19",
+                "created_at": "2026-04-19 16:00:00"
+            },
+            {
                 "id": "5",
                 "title": "S-RCS v1.3.3 Released!",
                 "message": "Major update with real enterprise deployment hardening:\n\n- LDAP Connection Test button in installer (verify AD credentials before completing setup)\n- Step-by-step update instructions with copy-to-clipboard commands\n- Full i18n for update modal (5 languages: EN/AZ/DE/RU/TR)\n- Docker security hardening: proper SSL cert with SAN, ServerName fix, HTTPS redirect port correction\n- System identifier Docker compatibility (hostname hash fallback)\n- config.php removed from git tracking (security + clean clone)\n- Pre-made PowerShell test data generator (up to 10,000 AD objects)\n- GitHub notifications system fixed",

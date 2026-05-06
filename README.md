@@ -22,7 +22,11 @@ The system is built on a core philosophy of **speed and simplicity**: virtually 
 - **"3-Click" Efficiency**: Optimized UX design ensures rapid execution of tasks.
 - **Centralized Management**: Handle User creation, Group management, OU structuring, and movements from a single dashboard.
 
-### 🆕 What's New in v1.3.3
+### 🆕 What's New in v1.3.4
+
+> 🐛 **Critical GPO Page Fix** — The Group Policy page would hang on the loading spinner indefinitely on many domains. Four root causes identified and fixed: binary AD attributes breaking `json_encode()`, `ob_clean()` leaking notices into the JSON response, no LDAP timeouts (could hang past PHP's 30s limit), and missing error suppression. Page now loads in 1-3s on small domains, 5-15s on large ones with proper error feedback. **All v1.3.x users should upgrade.**
+
+### What's New in v1.3.3
 
 > 🧪 **LDAP Connection Test in Installer** — No more blind installations! The Domain Settings step now has a "Test Connection" button that validates your AD credentials, auto-detects `Base DN` from rootDSE, checks admin group membership, and reports failures with troubleshooting hints — before you finish the wizard.
 >

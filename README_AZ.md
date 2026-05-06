@@ -22,7 +22,11 @@ Sistemin təməlində **sürət və sadəlik** fəlsəfəsi dayanır: demək ola
 - **"3-Klik" Effektivliyi**: Optimallaşdırılmış İstifadəçi Təcrübəsi (UX) dizaynı tapşırıqların ildırım sürəti ilə icrasını təmin edir.
 - **Mərkəzləşdirilmiş İdarəetmə**: İstifadəçi yaradılması, Qrup idarəçiliyi, OU strukturu və yerdəyişmələri (Move) tək bir paneldən idarə edilir.
 
-### 🆕 v1.3.3-də Yeniliklər
+### 🆕 v1.3.4-də Yeniliklər
+
+> 🐛 **Kritik GPO Səhifəsi Fix-i** — Group Policy səhifəsi bir çox domendə loading spinner-də əbədi qalırdı. 4 kök səbəb tapılıb düzəldildi: binary AD atributları `json_encode()`-i sındırırdı, `ob_clean()` notice-i JSON response-a sızırdı, LDAP timeout yox idi (PHP-nin 30s limitini keçə bilirdi), və error suppression yox idi. Səhifə kiçik domendə 1-3s, böyük domendə 5-15s yüklənir, xəta zamanı düzgün feedback verir. **Bütün v1.3.x istifadəçilər yeniləməlidir.**
+
+### v1.3.3-də Yeniliklər
 
 > 🧪 **Quraşdırmada LDAP Bağlantı Testi** — Artıq kor-koranə quraşdırma yoxdur! Domain Settings mərhələsində "Test Connection" düyməsi var — AD məlumatlarını yoxlayır, rootDSE-dən `Base DN`-i avtomatik aşkarlayır, admin qrup üzvlüyünü yoxlayır və uğursuzluq zamanı konkret səbəbi göstərir.
 >

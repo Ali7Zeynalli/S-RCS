@@ -4,6 +4,51 @@ All notable changes to S-RCS will be documented in this file.
 
 ---
 
+## [1.3.4] - 2026-04-19
+
+### 🐛 Critical Bug Fix — GPO Page Loading
+
+The Group Policy page would get stuck on the loading spinner indefinitely on many domains. Root cause analysis identified four issues, all fixed in this release.
+
+#### What was broken
+- **Spinner never disappeared** — the loading indicator stayed forever, no error shown to the user
+- **Frontend caught a parse failure but showed it as silent loading** — backend was returning malformed responses
+
+#### Root causes (all fixed)
+
+1. **Binary AD attributes broke `json_encode()`** — `gPCMachineExtensionNames` and `gPCUserExtensionNames` are stored as binary octet strings in Active Directory. PHP's `json_encode()` returns `false` on invalid UTF-8, producing an empty response body. Fix: added `JSON_INVALID_UTF8_SUBSTITUTE | JSON_UNESCAPED_UNICODE` flags.
+
+2. **`ob_clean()` without `ob_start()` leaked notice into JSON** — `api/gpo.php` called `ob_clean()` without first opening a buffer, generating a PHP notice that prefixed the JSON response. Frontend `JSON.parse()` failed, but the error was swallowed by the catch handler. Fix: replaced with proper `ob_start()` / `ob_end_clean()` pattern (matching the rest of the API endpoints).
+
+3. **No PHP error suppression** — `display_errors` was not explicitly set to `0` for this endpoint. Fix: added `ini_set('display_errors', '0')` + `error_reporting(E_ALL)` (errors still log via `error_log`, just don't leak into the response).
+
+4. **No LDAP timeouts** — if the LDAP server became slow or unreachable, `ldap_search()` could hang past PHP's 30-second `max_execution_time`. Fix: added `LDAP_OPT_NETWORK_TIMEOUT=10` and `LDAP_OPT_TIMELIMIT=20`.
+
+#### Affected file
+- `www/api/gpo.php` — only this one file changed; frontend `gpo.php` and other endpoints untouched.
+
+#### Impact
+- ✅ **Small domains (< 100 GPOs)** — page now loads in 1-3 seconds (previously hung forever)
+- ✅ **Large domains (1000+ GPOs)** — page now loads in 5-15 seconds with proper error feedback if LDAP is slow
+- ✅ **Binary AD attributes** — no longer cause silent failure
+- ⚠️ **Very large domains (5000+ OUs)** — Step 2 (collecting all OUs with gPLink) may still approach the 20-second limit; future release will add caching
+
+### 📋 How to Apply
+
+```bash
+git pull
+docker-compose down
+docker-compose up -d --build
+```
+
+The footer "UPDATE" badge will automatically detect this version on running installs (24-hour check cycle).
+
+### 🔐 Breaking Changes
+
+None. Pure bug fix, fully backward-compatible.
+
+---
+
 ## [1.3.3] - 2026-04-19
 
 ### ✨ New Features

@@ -5,13 +5,20 @@
  * Proprietary and confidential
  * Written by [Ali Zeynalli] <[https://linkedin.com/in/ali7zeynalli]> [2025]
  */
+// PHP error/notice-lərin JSON-a sızmasının qarşısını al
+ini_set('display_errors', '0');
+error_reporting(E_ALL);
+
 session_start();
 require_once(__DIR__ . '/../includes/functions.php');
 
+// Bütün output-u tut ki PHP warning JSON-u korlamasın
+ob_start();
+
 header('Content-Type: application/json');
-ob_clean();
 
 if (!isset($_SESSION['ad_username'])) {
+    ob_end_clean();
     http_response_code(401);
     die(json_encode(['error' => __('gpo_unauthorized')]));
 }
@@ -22,6 +29,9 @@ try {
     $base_dn = $config['ad_settings']['base_dn'];
     $gpo_container = "CN=Policies,CN=System," . $base_dn;
 
+    // LDAP timeout-ları — server cavab verməsə əbədi hang olmasın
+    ldap_set_option($ldap_conn, LDAP_OPT_NETWORK_TIMEOUT, 10);
+    ldap_set_option($ldap_conn, LDAP_OPT_TIMELIMIT, 20);
     // AD default page limit 1000 — pagination ilə böyük domen-də partial result alınmasın
     ldap_set_option($ldap_conn, LDAP_OPT_SIZELIMIT, 5000);
 
@@ -145,15 +155,18 @@ try {
         return strcasecmp($a['name'], $b['name']);
     });
 
+    // PHP warning-lərini at; binary attribute-lar UTF-8 substitute ilə təhlükəsiz şəkildə kodla
+    ob_end_clean();
     die(json_encode([
         'gpos' => $gpos,
         'stats' => [
             'total' => count($gpos),
             'linked_ous' => $linkedOUsCount
         ]
-    ]));
+    ], JSON_INVALID_UTF8_SUBSTITUTE | JSON_UNESCAPED_UNICODE));
 
 } catch (Exception $e) {
+    if (ob_get_level() > 0) ob_end_clean();
     error_log("GPO API Error: " . $e->getMessage());
     http_response_code(500);
     die(json_encode(['error' => $e->getMessage()]));
